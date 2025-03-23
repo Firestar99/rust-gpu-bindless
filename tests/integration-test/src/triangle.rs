@@ -8,21 +8,19 @@ use ash::vk::{
 use integration_test_shader::color::ColorEnum;
 use integration_test_shader::triangle::{Param, Vertex};
 use pollster::block_on;
-use rust_gpu_bindless::generic::descriptor::{
+use rust_gpu_bindless::spirv_std::glam::{UVec2, Vec2, Vec4};
+use rust_gpu_bindless::spirv_std::indirect_command::DrawIndirectCommand;
+use rust_gpu_bindless_core::descriptor::{
 	Bindless, BindlessAllocationScheme, BindlessBufferCreateInfo, BindlessBufferUsage, BindlessImageCreateInfo,
 	BindlessImageUsage, DescBufferLenExt, DescriptorCounts, Extent, Format, Image2d, MutDescBufferExt, RCDescExt,
 };
-use rust_gpu_bindless::generic::pipeline::{
+use rust_gpu_bindless_core::pipeline::{
 	ClearValue, ColorAttachment, GraphicsPipelineCreateInfo, HostAccess, LoadOp, MutBufferAccessExt, MutImageAccessExt,
 	PipelineDepthStencilStateCreateInfo, PipelineInputAssemblyStateCreateInfo, PipelineRasterizationStateCreateInfo,
 	RenderPassFormat, RenderingAttachment, StoreOp, TransferRead, TransferWrite,
 };
-use rust_gpu_bindless::generic::platform::ash::{
-	ash_init_single_graphics_queue, Ash, AshSingleGraphicsQueueCreateInfo,
-};
-use rust_gpu_bindless::generic::platform::BindlessPipelinePlatform;
-use rust_gpu_bindless::spirv_std::glam::{UVec2, Vec2, Vec4};
-use rust_gpu_bindless::spirv_std::indirect_command::DrawIndirectCommand;
+use rust_gpu_bindless_core::platform::ash::{ash_init_single_graphics_queue, Ash, AshSingleGraphicsQueueCreateInfo};
+use rust_gpu_bindless_core::platform::BindlessPipelinePlatform;
 use smallvec::SmallVec;
 use std::sync::Arc;
 

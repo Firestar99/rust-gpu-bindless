@@ -5,22 +5,20 @@ use ash::vk::{
 use integration_test::debugger;
 use integration_test_shader::color::ColorEnum;
 use integration_test_shader::triangle::{Param, Vertex};
-use rust_gpu_bindless::generic::descriptor::{
+use rust_gpu_bindless_core::descriptor::{
 	Bindless, BindlessAllocationScheme, BindlessBufferCreateInfo, BindlessBufferUsage, BindlessImageUsage,
 	DescriptorCounts, Format, Image2d, MutDesc, MutImage, RCDescExt,
 };
-use rust_gpu_bindless::generic::pipeline::{
+use rust_gpu_bindless_core::pipeline::{
 	BindlessGraphicsPipeline, ClearValue, ColorAttachment, GraphicsPipelineCreateInfo, LoadOp, MutImageAccessExt,
 	PipelineDepthStencilStateCreateInfo, PipelineInputAssemblyStateCreateInfo, PipelineRasterizationStateCreateInfo,
 	Present, RenderPassFormat, RenderingAttachment, StoreOp,
 };
-use rust_gpu_bindless::generic::platform::ash::Debuggers;
-use rust_gpu_bindless::generic::platform::ash::{
-	ash_init_single_graphics_queue, Ash, AshSingleGraphicsQueueCreateInfo,
-};
-use rust_gpu_bindless::generic::platform::BindlessPipelinePlatform;
-use rust_gpu_bindless::spirv_std::glam::{Vec2, Vec4};
-use rust_gpu_bindless::spirv_std::indirect_command::DrawIndirectCommand;
+use rust_gpu_bindless_core::platform::ash::Debuggers;
+use rust_gpu_bindless_core::platform::ash::{ash_init_single_graphics_queue, Ash, AshSingleGraphicsQueueCreateInfo};
+use rust_gpu_bindless_core::platform::BindlessPipelinePlatform;
+use rust_gpu_bindless_core::spirv_std::glam::{Vec2, Vec4};
+use rust_gpu_bindless_core::spirv_std::indirect_command::DrawIndirectCommand;
 use rust_gpu_bindless_winit::ash::{
 	ash_enumerate_required_extensions, AshSwapchain, AshSwapchainParams, SwapchainImageFormatPreference,
 };

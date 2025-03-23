@@ -1073,7 +1073,7 @@ dependencies = [
  "ash",
  "integration-test-shader",
  "pollster",
- "rust-gpu-bindless",
+ "rust-gpu-bindless-core",
  "rust-gpu-bindless-shader-builder",
  "rust-gpu-bindless-winit",
  "smallvec",
@@ -2002,6 +2002,24 @@ dependencies = [
 name = "rust-gpu-bindless"
 version = "0.1.0"
 dependencies = [
+ "rust-gpu-bindless-core",
+]
+
+[[package]]
+name = "rust-gpu-bindless-buffer-content"
+version = "0.1.0"
+dependencies = [
+ "bytemuck",
+ "bytemuck_derive",
+ "glam",
+ "spirv-std",
+ "static_assertions",
+]
+
+[[package]]
+name = "rust-gpu-bindless-core"
+version = "0.1.0"
+dependencies = [
  "anyhow",
  "ash",
  "bitflags 2.9.0",
@@ -2027,17 +2045,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rust-gpu-bindless-buffer-content"
-version = "0.1.0"
-dependencies = [
- "bytemuck",
- "bytemuck_derive",
- "glam",
- "spirv-std",
- "static_assertions",
-]
-
-[[package]]
 name = "rust-gpu-bindless-egui"
 version = "0.1.0"
 dependencies = [
@@ -2048,7 +2055,7 @@ dependencies = [
  "glam",
  "parking_lot",
  "profiling",
- "rust-gpu-bindless",
+ "rust-gpu-bindless-core",
  "rust-gpu-bindless-egui-shaders",
  "rust-gpu-bindless-shader-builder",
  "rust-gpu-bindless-shaders",
@@ -2067,7 +2074,7 @@ dependencies = [
  "egui",
  "egui_demo_lib",
  "profiling",
- "rust-gpu-bindless",
+ "rust-gpu-bindless-core",
  "rust-gpu-bindless-egui",
  "rust-gpu-bindless-winit",
  "winit",
@@ -2149,7 +2156,7 @@ dependencies = [
  "parking_lot",
  "pollster",
  "profiling",
- "rust-gpu-bindless",
+ "rust-gpu-bindless-core",
  "smallvec",
  "static_assertions",
  "thiserror 2.0.12",
