@@ -10,6 +10,7 @@ pub mod backing {
 
 pub mod descriptor {
 	pub type Bindless = rust_gpu_bindless_core::descriptor::Bindless<crate::P>;
+	pub type BindlessInstance = rust_gpu_bindless_core::descriptor::BindlessInstance<crate::P>;
 	pub type BindlessFrame = rust_gpu_bindless_core::descriptor::BindlessFrame<crate::P>;
 	pub type StrongMetadataCpu<'a> = rust_gpu_bindless_core::descriptor::StrongMetadataCpu<'a, crate::P>;
 	pub type BackingRefsError = rust_gpu_bindless_core::descriptor::BackingRefsError;

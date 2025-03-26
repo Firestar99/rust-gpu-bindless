@@ -44,8 +44,8 @@ impl<'a, P: BindlessPlatform> StrongMetadataCpu<'a, P> {
 	}
 }
 
-unsafe impl<'a, P: BindlessPlatform> MetadataCpuInterface for StrongMetadataCpu<'a, P> {
-	fn visit_strong_descriptor<C: DescContent + ?Sized>(&mut self, desc: StrongDesc<C>) {
+unsafe impl<P: BindlessPlatform> MetadataCpuInterface for StrongMetadataCpu<'_, P> {
+	fn visit_strong_descriptor<C: DescContent>(&mut self, desc: StrongDesc<C>) {
 		if let Ok(refs) = &mut self.refs {
 			let id = desc.id();
 			match refs.entry(id) {
@@ -62,7 +62,7 @@ unsafe impl<'a, P: BindlessPlatform> MetadataCpuInterface for StrongMetadataCpu<
 	}
 }
 
-impl<'a, P: BindlessPlatform> Deref for StrongMetadataCpu<'a, P> {
+impl<P: BindlessPlatform> Deref for StrongMetadataCpu<'_, P> {
 	type Target = Metadata;
 
 	fn deref(&self) -> &Self::Target {

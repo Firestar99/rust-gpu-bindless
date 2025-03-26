@@ -3,12 +3,11 @@ use crate::backing::table::DrainFlushQueue;
 use crate::descriptor::{
 	Bindless, BindlessBufferCreateInfo, BindlessImageCreateInfo, BindlessSamplerCreateInfo, BufferAllocationError,
 	BufferInterface, BufferSlot, DescriptorCounts, ImageAllocationError, ImageInterface, SamplerAllocationError,
-	SamplerInterface,
+	SamplerInterface, WeakBindless,
 };
 use rust_gpu_bindless_shaders::descriptor::ImageType;
 use std::error::Error;
 use std::future::Future;
-use std::sync::Arc;
 
 /// Internal interface for bindless API calls, may change at any time!
 pub unsafe trait BindlessPlatform: Sized + Send + Sync + 'static {
@@ -33,7 +32,7 @@ pub unsafe trait BindlessPlatform: Sized + Send + Sync + 'static {
 	/// members that will be initialized in this function.
 	unsafe fn create_platform(
 		create_info: Self::PlatformCreateInfo,
-		bindless_cyclic: &std::sync::Weak<Bindless<Self>>,
+		bindless_cyclic: &WeakBindless<Self>,
 	) -> Result<Self, Self::PlatformCreateError>;
 
 	unsafe fn update_after_bind_descriptor_limits(&self) -> DescriptorCounts;
@@ -42,10 +41,10 @@ pub unsafe trait BindlessPlatform: Sized + Send + Sync + 'static {
 
 	/// Bindless has been fully initialized but not yet returned to the end user. Feel free to do any required
 	/// modifications or buffer allocations here.
-	unsafe fn bindless_initialized(&self, bindless: &Arc<Bindless<Self>>);
+	unsafe fn bindless_initialized(&self, bindless: &Bindless<Self>);
 
 	/// Bindless should start to shut down. No further executions may happen after.
-	unsafe fn bindless_shutdown(&self, bindless: &Arc<Bindless<Self>>);
+	unsafe fn bindless_shutdown(&self, bindless: &Bindless<Self>);
 
 	/// Update the [`BindlessDescriptorSet`] with these changed buffers, images and samplers.
 	///
@@ -83,7 +82,8 @@ pub unsafe trait BindlessPlatform: Sized + Send + Sync + 'static {
 	/// Turn a mapped Buffer into a Slab. You may assume that the buffer is mappable, aka. has either
 	/// [`BindlessBufferUsage::MAP_WRITE`] or [`BindlessBufferUsage::MAP_READ`]. You also have exclusive access
 	/// to the Buffer.
-	unsafe fn mapped_buffer_to_slab<'a>(buffer: &'a BufferSlot<Self>) -> &'a mut (impl presser::Slab + 'a);
+	#[allow(clippy::mut_from_ref)]
+	unsafe fn mapped_buffer_to_slab(buffer: &BufferSlot<Self>) -> &mut (impl presser::Slab + '_);
 
 	/// Destroy specified buffers. You have exclusive access to the associated [`BufferSlot`]s, even if they are just
 	/// passed by standard reference. After this method call returns, the [`BufferSlot`] will be dropped and otherwise

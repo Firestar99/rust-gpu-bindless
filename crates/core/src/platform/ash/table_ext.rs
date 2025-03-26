@@ -11,7 +11,7 @@ use rust_gpu_bindless_shaders::buffer_content::BufferContent;
 use rust_gpu_bindless_shaders::descriptor::MutBuffer;
 use std::ffi::CString;
 
-impl<'a> SamplerTableAccess<'a, Ash> {
+impl SamplerTableAccess<'_, Ash> {
 	pub fn alloc_ash(
 		&self,
 		sampler_create_info: &SamplerCreateInfo,
@@ -20,20 +20,21 @@ impl<'a> SamplerTableAccess<'a, Ash> {
 			Ok(self.alloc_slot(
 				self.0
 					.device
-					.create_sampler(&sampler_create_info, None)
+					.create_sampler(sampler_create_info, None)
 					.map_err(AshAllocationError::from)?,
 			)?)
 		}
 	}
 }
 
-impl<'a> BufferTableAccess<'a, Ash> {
+impl BufferTableAccess<'_, Ash> {
 	/// Create a new buffer directly from an ash's [`BufferCreateInfo`] and the flattened members of GpuAllocator's
 	/// [`AllocationCreateDesc`] to allow for maximum customizability.
 	///
 	/// # Safety
 	/// Size must be sufficient to store `T`. If `T` is a slice, `len` must be its length, otherwise it must be 1.
 	/// Returned buffer will be uninitialized.
+	#[allow(clippy::too_many_arguments)]
 	pub unsafe fn alloc_ash_unchecked<T: BufferContent + ?Sized>(
 		&self,
 		ash_create_info: &ash::vk::BufferCreateInfo,
@@ -48,7 +49,7 @@ impl<'a> BufferTableAccess<'a, Ash> {
 			let buffer = self
 				.0
 				.device
-				.create_buffer(&ash_create_info, None)
+				.create_buffer(ash_create_info, None)
 				.map_err(AshAllocationError::from)?;
 			if let Some(debug_marker) = self.0.extensions.debug_utils.as_ref() {
 				debug_marker

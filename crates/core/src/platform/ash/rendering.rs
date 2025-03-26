@@ -16,7 +16,6 @@ use rust_gpu_bindless_shaders::utils::viewport::Viewport;
 use smallvec::SmallVec;
 use std::mem::size_of;
 use std::ops::{Deref, DerefMut};
-use std::sync::Arc;
 
 pub struct AshRenderingContext<'a, 'b> {
 	recording: &'b mut AshRecordingContext<'a>,
@@ -27,17 +26,17 @@ pub struct AshRenderingContext<'a, 'b> {
 	set_scissor: bool,
 }
 
-impl<'a, 'b> Deref for AshRenderingContext<'a, 'b> {
+impl<'a> Deref for AshRenderingContext<'a, '_> {
 	type Target = AshRecordingContext<'a>;
 
 	fn deref(&self) -> &Self::Target {
-		&self.recording
+		self.recording
 	}
 }
 
-impl<'a, 'b> DerefMut for AshRenderingContext<'a, 'b> {
+impl DerefMut for AshRenderingContext<'_, '_> {
 	fn deref_mut(&mut self) -> &mut Self::Target {
-		&mut self.recording
+		self.recording
 	}
 }
 
@@ -183,11 +182,11 @@ impl<'a, 'b> AshRenderingContext<'a, 'b> {
 	}
 }
 
-unsafe impl<'a, 'b> TransientAccess<'a> for AshRenderingContext<'a, 'b> {}
+unsafe impl<'a> TransientAccess<'a> for AshRenderingContext<'a, '_> {}
 
-unsafe impl<'a, 'b> HasResourceContext<'a, Ash> for AshRenderingContext<'a, 'b> {
+unsafe impl<'a> HasResourceContext<'a, Ash> for AshRenderingContext<'a, '_> {
 	#[inline]
-	fn bindless(&self) -> &Arc<Bindless<Ash>> {
+	fn bindless(&self) -> &Bindless<Ash> {
 		self.recording.bindless()
 	}
 

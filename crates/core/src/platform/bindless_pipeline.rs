@@ -15,7 +15,6 @@ use rust_gpu_bindless_shaders::shader_type::{ComputeShader, FragmentShader, Mesh
 use rust_gpu_bindless_shaders::utils::rect::IRect2;
 use rust_gpu_bindless_shaders::utils::viewport::Viewport;
 use std::error::Error;
-use std::sync::Arc;
 
 /// Internal interface for pipeline module related API calls, may change at any time!
 pub unsafe trait BindlessPipelinePlatform: BindlessPlatform {
@@ -26,12 +25,12 @@ pub unsafe trait BindlessPipelinePlatform: BindlessPlatform {
 	type RecordingError: 'static + Error + Send + Sync + Into<RecordingError<Self>>;
 
 	unsafe fn create_compute_pipeline<T: BufferStruct>(
-		bindless: &Arc<Bindless<Self>>,
+		bindless: &Bindless<Self>,
 		compute_shader: &impl BindlessShader<ShaderType = ComputeShader, ParamConstant = T>,
 	) -> Result<Self::ComputePipeline, Self::PipelineCreationError>;
 
 	unsafe fn record_and_execute<R: Send + Sync>(
-		bindless: &Arc<Bindless<Self>>,
+		bindless: &Bindless<Self>,
 		f: impl FnOnce(&mut Recording<'_, Self>) -> Result<R, RecordingError<Self>>,
 	) -> Result<R, RecordingError<Self>>;
 
@@ -40,7 +39,7 @@ pub unsafe trait BindlessPipelinePlatform: BindlessPlatform {
 	type RenderingContext<'a: 'b, 'b>: RenderingContext<'a, 'b, Self>;
 
 	unsafe fn create_graphics_pipeline<T: BufferStruct>(
-		bindless: &Arc<Bindless<Self>>,
+		bindless: &Bindless<Self>,
 		render_pass: &RenderPassFormat,
 		create_info: &GraphicsPipelineCreateInfo,
 		vertex_shader: &impl BindlessShader<ShaderType = VertexShader, ParamConstant = T>,
@@ -48,7 +47,7 @@ pub unsafe trait BindlessPipelinePlatform: BindlessPlatform {
 	) -> Result<Self::GraphicsPipeline, Self::PipelineCreationError>;
 
 	unsafe fn create_mesh_graphics_pipeline<T: BufferStruct>(
-		bindless: &Arc<Bindless<Self>>,
+		bindless: &Bindless<Self>,
 		render_pass: &RenderPassFormat,
 		create_info: &MeshGraphicsPipelineCreateInfo,
 		task_shader: Option<&impl BindlessShader<ShaderType = TaskShader, ParamConstant = T>>,

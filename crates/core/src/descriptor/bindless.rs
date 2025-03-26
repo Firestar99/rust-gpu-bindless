@@ -7,9 +7,47 @@ use crate::platform::BindlessPlatform;
 use rust_gpu_bindless_shaders::buffer_content::Metadata;
 use rust_gpu_bindless_shaders::descriptor::TransientAccess;
 use std::ops::Deref;
-use std::sync::Arc;
+use std::sync::{Arc, Weak};
 
-pub struct Bindless<P: BindlessPlatform> {
+pub struct Bindless<P: BindlessPlatform>(Arc<BindlessInner<P>>);
+
+impl<P: BindlessPlatform> Clone for Bindless<P> {
+	fn clone(&self) -> Self {
+		Self(self.0.clone())
+	}
+}
+
+impl<P: BindlessPlatform> Deref for Bindless<P> {
+	type Target = Arc<BindlessInner<P>>;
+
+	fn deref(&self) -> &Self::Target {
+		&self.0
+	}
+}
+
+pub struct WeakBindless<P: BindlessPlatform>(Weak<BindlessInner<P>>);
+
+impl<P: BindlessPlatform> WeakBindless<P> {
+	pub fn upgrade(&self) -> Option<Bindless<P>> {
+		self.0.upgrade().map(Bindless)
+	}
+}
+
+impl<P: BindlessPlatform> Clone for WeakBindless<P> {
+	fn clone(&self) -> Self {
+		Self(self.0.clone())
+	}
+}
+
+impl<P: BindlessPlatform> Deref for WeakBindless<P> {
+	type Target = Weak<BindlessInner<P>>;
+
+	fn deref(&self) -> &Self::Target {
+		&self.0
+	}
+}
+
+pub struct BindlessInner<P: BindlessPlatform> {
 	pub platform: P,
 	/// always Some, Option is only needed for clean drop
 	descriptor_set: Option<P::BindlessDescriptorSet>,
@@ -19,7 +57,7 @@ pub struct Bindless<P: BindlessPlatform> {
 	pub(super) sampler: SamplerTable<P>,
 }
 
-impl<P: BindlessPlatform> Deref for Bindless<P> {
+impl<P: BindlessPlatform> Deref for BindlessInner<P> {
 	type Target = P;
 
 	fn deref(&self) -> &Self::Target {
@@ -27,10 +65,12 @@ impl<P: BindlessPlatform> Deref for Bindless<P> {
 	}
 }
 
-pub struct BindlessInstance<P: BindlessPlatform>(Arc<Bindless<P>>);
+/// Bindless will accept executions for as long as the initially returned [`BindlessInstance`] object is alive. When it
+/// is dropped, the shutdown is initiated.
+pub struct BindlessInstance<P: BindlessPlatform>(Bindless<P>);
 
 impl<P: BindlessPlatform> Deref for BindlessInstance<P> {
-	type Target = Arc<Bindless<P>>;
+	type Target = Bindless<P>;
 
 	fn deref(&self) -> &Self::Target {
 		&self.0
@@ -40,37 +80,40 @@ impl<P: BindlessPlatform> Deref for BindlessInstance<P> {
 impl<P: BindlessPlatform> Drop for BindlessInstance<P> {
 	fn drop(&mut self) {
 		unsafe {
-			self.0.bindless_shutdown(&self.0);
+			self.bindless_shutdown(&self.0);
 		}
 	}
 }
 
-impl<P: BindlessPlatform> Bindless<P> {
+impl<P: BindlessPlatform> BindlessInstance<P> {
 	/// Creates a new Descriptors instance with which to allocate descriptors.
 	///
 	/// # Safety
 	/// * There must only be one global Bindless instance for each [`Device`].
 	/// * The [general bindless safety requirements](crate#safety) apply
-	pub unsafe fn new(ci: P::PlatformCreateInfo, counts: DescriptorCounts) -> BindlessInstance<P> {
-		let bindless = Arc::new_cyclic(|weak| {
+	pub unsafe fn new(ci: P::PlatformCreateInfo, counts: DescriptorCounts) -> Self {
+		let bindless = Bindless(Arc::new_cyclic(|weak| {
+			let weak = WeakBindless(weak.clone());
 			// TODO propagate error
-			let platform = P::create_platform(ci, weak).unwrap();
+			let platform = P::create_platform(ci, &weak).unwrap();
 			counts.assert_within_limits::<P>(&platform);
 
 			let table_sync = TableSync::new();
-			Self {
+			BindlessInner {
 				buffer: BufferTable::new(&table_sync, counts, weak.clone()),
 				image: ImageTable::new(&table_sync, counts, weak.clone()),
-				sampler: SamplerTable::new(&table_sync, counts, weak.clone()),
+				sampler: SamplerTable::new(&table_sync, counts, weak),
 				descriptor_set: Some(platform.create_descriptor_set(counts)),
 				table_sync,
 				platform,
 			}
-		});
+		}));
 		bindless.platform.bindless_initialized(&bindless);
 		BindlessInstance(bindless)
 	}
+}
 
+impl<P: BindlessPlatform> Bindless<P> {
 	#[inline(never)]
 	fn unreachable_bindless_dropped() -> ! {
 		unreachable!("Bindless has most likely been dropped");
@@ -90,23 +133,23 @@ impl<P: BindlessPlatform> Bindless<P> {
 	}
 
 	#[inline]
-	pub fn buffer<'a>(self: &'a Arc<Self>) -> BufferTableAccess<'a, P> {
+	pub fn buffer(&self) -> BufferTableAccess<P> {
 		BufferTableAccess(self)
 	}
 
 	#[inline]
-	pub fn image<'a>(self: &'a Arc<Self>) -> ImageTableAccess<'a, P> {
+	pub fn image(&self) -> ImageTableAccess<P> {
 		ImageTableAccess(self)
 	}
 
 	#[inline]
-	pub fn sampler<'a>(self: &'a Arc<Self>) -> SamplerTableAccess<'a, P> {
+	pub fn sampler(&self) -> SamplerTableAccess<P> {
 		SamplerTableAccess(self)
 	}
 
 	/// Flush the bindless descriptor set. All newly allocated resources before this call will be written. Failing to
 	/// flush before enqueueing work is undefined behaviour.
-	pub fn flush(self: &Arc<Self>) {
+	pub fn flush(&self) {
 		let flush_guard = self.table_sync.flush_lock();
 		flush_guard.flush();
 		unsafe {
@@ -124,16 +167,16 @@ impl<P: BindlessPlatform> Bindless<P> {
 	/// creating [`TransientDesc`] from [`RCDesc`] which are guaranteed to be alive as long as [`BindlessFrame`] is.
 	/// There may be multiple active Frames at the same time that can finish out of order.
 	#[inline]
-	pub fn frame(self: &Arc<Self>) -> Arc<BindlessFrame<P>> {
-		Arc::new(BindlessFrame {
+	pub fn frame(&self) -> BindlessFrame<P> {
+		BindlessFrame(Arc::new(BindlessFrameInner {
 			bindless: self.clone(),
 			frame_guard: self.table_sync.frame(),
 			metadata: Metadata,
-		})
+		}))
 	}
 }
 
-impl<P: BindlessPlatform> Drop for Bindless<P> {
+impl<P: BindlessPlatform> Drop for BindlessInner<P> {
 	fn drop(&mut self) {
 		unsafe {
 			self.platform
@@ -142,8 +185,24 @@ impl<P: BindlessPlatform> Drop for Bindless<P> {
 	}
 }
 
-pub struct BindlessFrame<P: BindlessPlatform> {
-	pub bindless: Arc<Bindless<P>>,
+pub struct BindlessFrame<P: BindlessPlatform>(Arc<BindlessFrameInner<P>>);
+
+impl<P: BindlessPlatform> Clone for BindlessFrame<P> {
+	fn clone(&self) -> Self {
+		Self(self.0.clone())
+	}
+}
+
+impl<P: BindlessPlatform> Deref for BindlessFrame<P> {
+	type Target = Arc<BindlessFrameInner<P>>;
+
+	fn deref(&self) -> &Self::Target {
+		&self.0
+	}
+}
+
+pub struct BindlessFrameInner<P: BindlessPlatform> {
+	pub bindless: Bindless<P>,
 	pub frame_guard: FrameGuard,
 	pub metadata: Metadata,
 }

@@ -132,7 +132,7 @@ unsafe impl RecordingResourceContext<Ash> for AshRecordingResourceContext {
 }
 
 pub unsafe fn ash_record_and_execute<R>(
-	bindless: &Arc<Bindless<Ash>>,
+	bindless: &Bindless<Ash>,
 	f: impl FnOnce(&mut Recording<'_, Ash>) -> Result<R, RecordingError<Ash>>,
 ) -> Result<R, RecordingError<Ash>> {
 	let resource = AshRecordingResourceContext::new(
@@ -149,7 +149,7 @@ pub unsafe fn ash_record_and_execute<R>(
 }
 
 pub unsafe fn ash_submit(
-	bindless: &Arc<Bindless<Ash>>,
+	bindless: &Bindless<Ash>,
 	resource_context: AshRecordingResourceContext,
 	cmd: CommandBuffer,
 ) -> Result<(), AshRecordingError> {
@@ -206,7 +206,7 @@ pub unsafe fn ash_submit(
 pub struct AshRecordingContext<'a> {
 	/// The same bindless as `self.execution.frame.bindless` but with only 1 instead of 3 indirections.
 	/// Also less typing.
-	pub(super) bindless: Arc<Bindless<Ash>>,
+	pub(super) bindless: Bindless<Ash>,
 	pub(super) resource_context: &'a AshRecordingResourceContext,
 	// mut state
 	pub(super) cmd: CommandBuffer,
@@ -264,9 +264,9 @@ impl<'a> AshRecordingContext<'a> {
 			device.cmd_pipeline_barrier2(
 				self.cmd,
 				&DependencyInfo::default()
-					.memory_barriers(&*collector.memory)
-					.buffer_memory_barriers(&*collector.buffers)
-					.image_memory_barriers(&*collector.image),
+					.memory_barriers(&collector.memory)
+					.buffer_memory_barriers(&collector.buffers)
+					.image_memory_barriers(&collector.image),
 			);
 			collector.memory.clear();
 			collector.buffers.clear();
@@ -281,7 +281,7 @@ impl<'a> AshRecordingContext<'a> {
 			Ok(())
 		} else {
 			Err(AshRecordingError::BarrierWhileRendering {
-				collector: collector.clone(),
+				collector: Box::new(collector.clone()),
 			})
 		}
 	}
@@ -354,7 +354,7 @@ unsafe impl<'a> TransientAccess<'a> for AshRecordingContext<'a> {}
 
 unsafe impl<'a> HasResourceContext<'a, Ash> for AshRecordingContext<'a> {
 	#[inline]
-	fn bindless(&self) -> &Arc<Bindless<Ash>> {
+	fn bindless(&self) -> &Bindless<Ash> {
 		&self.bindless
 	}
 
@@ -535,7 +535,7 @@ pub enum AshRecordingError {
 	#[error("Vk Error: {0}")]
 	Vk(#[from] ash::vk::Result),
 	#[error("No barriers must be inserted while rendering: {collector:?}")]
-	BarrierWhileRendering { collector: AshBarrierCollector },
+	BarrierWhileRendering { collector: Box<AshBarrierCollector> },
 }
 
 impl Debug for AshRecordingError {

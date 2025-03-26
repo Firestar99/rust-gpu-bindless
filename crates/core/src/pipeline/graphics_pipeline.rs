@@ -31,7 +31,7 @@ pub struct GraphicsPipelineCreateInfo<'a> {
 
 impl<P: BindlessPipelinePlatform> Bindless<P> {
 	pub fn create_graphics_pipeline<T: BufferStruct>(
-		self: &Arc<Self>,
+		&self,
 		render_pass: &RenderPassFormat,
 		create_info: &GraphicsPipelineCreateInfo,
 		vertex_shader: &impl BindlessShader<ShaderType = VertexShader, ParamConstant = T>,

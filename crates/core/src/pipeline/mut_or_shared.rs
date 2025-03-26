@@ -4,6 +4,11 @@ use crate::platform::{BindlessPipelinePlatform, BindlessPlatform};
 use rust_gpu_bindless_shaders::buffer_content::BufferContent;
 use rust_gpu_bindless_shaders::descriptor::{Buffer, Image, ImageType};
 
+/// A read-only buffer that is either a [`MutBufferAccess`] in [`GeneralRead`] layout or a shared read-only [`RCDesc`]
+/// buffer.
+///
+/// # Safety
+/// Must reference a read-only buffer
 pub unsafe trait MutOrSharedBuffer<P: BindlessPlatform, T: BufferContent + ?Sized, A> {
 	unsafe fn inner_slot(&self) -> &BufferSlot<P>;
 
@@ -41,6 +46,11 @@ unsafe impl<P: BindlessPipelinePlatform, T: BufferContent + ?Sized, A: BufferAcc
 	}
 }
 
+/// A read-only image that is either a [`MutImageAccess`] in [`GeneralRead`] layout or a shared read-only [`RCDesc`]
+/// image.
+///
+/// # Safety
+/// Must reference a read-only buffer
 pub unsafe trait MutOrSharedImage<P: BindlessPlatform, T: ImageType, A> {
 	unsafe fn inner_slot(&self) -> &ImageSlot<P>;
 

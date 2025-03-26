@@ -1,4 +1,4 @@
-use crate::descriptor::{Bindless, Format};
+use crate::descriptor::Bindless;
 use crate::pipeline::{
 	GraphicsPipelineCreateInfo, MeshGraphicsPipelineCreateInfo, PipelineColorBlendStateCreateInfo,
 	PipelineDepthStencilStateCreateInfo, PipelineInputAssemblyStateCreateInfo, Recording, RecordingError,
@@ -25,7 +25,6 @@ use rust_gpu_bindless_shaders::shader_type::{
 use smallvec::SmallVec;
 use std::ffi::CStr;
 use std::marker::PhantomData;
-use std::sync::Arc;
 
 unsafe impl BindlessPipelinePlatform for Ash {
 	type PipelineCreationError = ash::vk::Result;
@@ -35,7 +34,7 @@ unsafe impl BindlessPipelinePlatform for Ash {
 	type RecordingError = AshRecordingError;
 
 	unsafe fn create_compute_pipeline<T: BufferStruct>(
-		bindless: &Arc<Bindless<Self>>,
+		bindless: &Bindless<Self>,
 		compute_shader: &impl BindlessShader<ShaderType = ComputeShader, ParamConstant = T>,
 	) -> Result<Self::ComputePipeline, Self::PipelineCreationError> {
 		let compute = AshShaderModule::new(bindless, compute_shader)?;
@@ -57,7 +56,7 @@ unsafe impl BindlessPipelinePlatform for Ash {
 	}
 
 	unsafe fn record_and_execute<R: Send + Sync>(
-		bindless: &Arc<Bindless<Self>>,
+		bindless: &Bindless<Self>,
 		f: impl FnOnce(&mut Recording<'_, Self>) -> Result<R, RecordingError<Self>>,
 	) -> Result<R, RecordingError<Self>> {
 		ash_record_and_execute(bindless, f)
@@ -68,7 +67,7 @@ unsafe impl BindlessPipelinePlatform for Ash {
 	type RenderingContext<'a: 'b, 'b> = AshRenderingContext<'a, 'b>;
 
 	unsafe fn create_graphics_pipeline<T: BufferStruct>(
-		bindless: &Arc<Bindless<Self>>,
+		bindless: &Bindless<Self>,
 		render_pass: &RenderPassFormat,
 		create_info: &GraphicsPipelineCreateInfo,
 		vertex_shader: &impl BindlessShader<ShaderType = VertexShader, ParamConstant = T>,
@@ -76,7 +75,7 @@ unsafe impl BindlessPipelinePlatform for Ash {
 	) -> Result<Self::GraphicsPipeline, Self::PipelineCreationError> {
 		let vertex = AshShaderModule::new(bindless, vertex_shader)?;
 		let fragment = AshShaderModule::new(bindless, fragment_shader)?;
-		Ok(AshGraphicsPipeline(Self::ash_create_abstract_graphics_pipeline::<T>(
+		Ok(AshGraphicsPipeline(Self::ash_create_abstract_graphics_pipeline(
 			bindless,
 			render_pass,
 			create_info.input_assembly_state,
@@ -91,7 +90,7 @@ unsafe impl BindlessPipelinePlatform for Ash {
 	}
 
 	unsafe fn create_mesh_graphics_pipeline<T: BufferStruct>(
-		bindless: &Arc<Bindless<Self>>,
+		bindless: &Bindless<Self>,
 		render_pass: &RenderPassFormat,
 		create_info: &MeshGraphicsPipelineCreateInfo,
 		task_shader: Option<&impl BindlessShader<ShaderType = TaskShader, ParamConstant = T>>,
@@ -111,24 +110,22 @@ unsafe impl BindlessPipelinePlatform for Ash {
 				fragment.to_shader_stage_create_info(),
 			])
 			.collect::<SmallVec<[_; 3]>>();
-		Ok(AshMeshGraphicsPipeline(
-			Self::ash_create_abstract_graphics_pipeline::<T>(
-				bindless,
-				render_pass,
-				PipelineInputAssemblyStateCreateInfo::default(),
-				create_info.rasterization_state,
-				create_info.depth_stencil_state,
-				create_info.color_blend_state,
-				&stages,
-			)?,
-		))
+		Ok(AshMeshGraphicsPipeline(Self::ash_create_abstract_graphics_pipeline(
+			bindless,
+			render_pass,
+			PipelineInputAssemblyStateCreateInfo::default(),
+			create_info.rasterization_state,
+			create_info.depth_stencil_state,
+			create_info.color_blend_state,
+			&stages,
+		)?))
 	}
 }
 
 impl Ash {
 	#[inline]
-	unsafe fn ash_create_abstract_graphics_pipeline<T: BufferStruct>(
-		bindless: &Arc<Bindless<Self>>,
+	unsafe fn ash_create_abstract_graphics_pipeline(
+		bindless: &Bindless<Self>,
 		render_pass: &RenderPassFormat,
 		input_assembly_state: PipelineInputAssemblyStateCreateInfo,
 		rasterization_state: PipelineRasterizationStateCreateInfo,
@@ -171,7 +168,7 @@ impl Ash {
 					.push_next(
 						&mut PipelineRenderingCreateInfo::default()
 							.color_attachment_formats(&render_pass.color_attachments)
-							.depth_attachment_format(render_pass.depth_attachment.unwrap_or(Format::default())),
+							.depth_attachment_format(render_pass.depth_attachment.unwrap_or_default()),
 					)],
 				None,
 			)
@@ -185,7 +182,7 @@ impl Ash {
 }
 
 pub struct AshShaderModule<'a, S: ShaderType, T: BufferStruct> {
-	bindless: Arc<Bindless<Ash>>,
+	bindless: Bindless<Ash>,
 	module: ShaderModule,
 	entry_point_name: &'a CStr,
 	_phantom: PhantomData<(S, T)>,
@@ -193,7 +190,7 @@ pub struct AshShaderModule<'a, S: ShaderType, T: BufferStruct> {
 
 impl<'a, S: ShaderType, T: BufferStruct> AshShaderModule<'a, S, T> {
 	pub fn new(
-		bindless: &Arc<Bindless<Ash>>,
+		bindless: &Bindless<Ash>,
 		shader: &'a impl BindlessShader<ShaderType = S, ParamConstant = T>,
 	) -> VkResult<Self> {
 		unsafe {
@@ -218,7 +215,7 @@ impl<'a, S: ShaderType, T: BufferStruct> AshShaderModule<'a, S, T> {
 	}
 }
 
-impl<'a, S: ShaderType, T: BufferStruct> Drop for AshShaderModule<'a, S, T> {
+impl<S: ShaderType, T: BufferStruct> Drop for AshShaderModule<'_, S, T> {
 	fn drop(&mut self) {
 		unsafe { self.bindless.device.destroy_shader_module(self.module, None) }
 	}
@@ -229,7 +226,7 @@ pub struct AshGraphicsPipeline(pub AshPipeline);
 pub struct AshMeshGraphicsPipeline(pub AshPipeline);
 
 pub struct AshPipeline {
-	pub bindless: Arc<Bindless<Ash>>,
+	pub bindless: Bindless<Ash>,
 	pub pipeline: Pipeline,
 }
 

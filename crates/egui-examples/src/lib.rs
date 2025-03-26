@@ -1,4 +1,4 @@
-use rust_gpu_bindless_core::descriptor::{Bindless, BindlessImageUsage, DescriptorCounts};
+use rust_gpu_bindless_core::descriptor::{BindlessImageUsage, BindlessInstance, DescriptorCounts};
 use rust_gpu_bindless_core::pipeline::{ClearValue, ColorAttachment, LoadOp, MutImageAccessExt, Present};
 use rust_gpu_bindless_core::platform::ash::Debuggers;
 use rust_gpu_bindless_core::platform::ash::{ash_init_single_graphics_queue, Ash, AshSingleGraphicsQueueCreateInfo};
@@ -45,7 +45,7 @@ pub async fn main_loop(
 		.await?;
 
 	let bindless = unsafe {
-		Bindless::<Ash>::new(
+		BindlessInstance::<Ash>::new(
 			ash_init_single_graphics_queue(AshSingleGraphicsQueueCreateInfo {
 				instance_extensions: window_extensions,
 				extensions: &[ash::khr::swapchain::NAME, ash::ext::mesh_shader::NAME],

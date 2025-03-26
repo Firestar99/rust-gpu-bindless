@@ -14,12 +14,11 @@ use rust_gpu_bindless_shaders::buffer_content::{BufferContent, BufferStruct};
 use rust_gpu_bindless_shaders::descriptor::{ImageType, TransientAccess};
 use std::fmt::{Debug, Display, Formatter};
 use std::ops::{Deref, DerefMut};
-use std::sync::Arc;
 use thiserror::Error;
 
 impl<P: BindlessPipelinePlatform> Bindless<P> {
 	pub fn execute<R: Send + Sync>(
-		self: &Arc<Self>,
+		&self,
 		f: impl FnOnce(&mut Recording<'_, P>) -> Result<R, RecordingError<P>>,
 	) -> Result<R, RecordingError<P>> {
 		unsafe { P::record_and_execute(self, f) }
@@ -40,7 +39,7 @@ impl<'a, P: BindlessPipelinePlatform> Deref for Recording<'a, P> {
 	}
 }
 
-impl<'a, P: BindlessPipelinePlatform> DerefMut for Recording<'a, P> {
+impl<P: BindlessPipelinePlatform> DerefMut for Recording<'_, P> {
 	fn deref_mut(&mut self) -> &mut Self::Target {
 		&mut self.platform
 	}
@@ -48,14 +47,14 @@ impl<'a, P: BindlessPipelinePlatform> DerefMut for Recording<'a, P> {
 
 pub unsafe trait HasResourceContext<'a, P: BindlessPipelinePlatform>: TransientAccess<'a> + Sized {
 	/// Gets the [`Bindless`] of this execution
-	fn bindless(&self) -> &Arc<Bindless<Ash>>;
+	fn bindless(&self) -> &Bindless<Ash>;
 
 	fn resource_context(&self) -> &'a P::RecordingResourceContext;
 }
 
 unsafe impl<'a, P: BindlessPipelinePlatform> HasResourceContext<'a, P> for Recording<'a, P> {
 	#[inline]
-	fn bindless(&self) -> &Arc<Bindless<Ash>> {
+	fn bindless(&self) -> &Bindless<Ash> {
 		self.platform.bindless()
 	}
 
@@ -95,10 +94,9 @@ impl<'a, P: BindlessPipelinePlatform> Recording<'a, P> {
 		src.has_required_usage(BindlessBufferUsage::TRANSFER_SRC)?;
 		dst.has_required_usage(BindlessBufferUsage::TRANSFER_DST)?;
 		unsafe {
-			Ok(self
-				.platform
+			self.platform
 				.copy_buffer_to_buffer(src, dst)
-				.map_err(Into::<RecordingError<P>>::into)?)
+				.map_err(Into::<RecordingError<P>>::into)
 		}
 	}
 
@@ -115,10 +113,9 @@ impl<'a, P: BindlessPipelinePlatform> Recording<'a, P> {
 		src.has_required_usage(BindlessBufferUsage::TRANSFER_SRC)?;
 		dst.has_required_usage(BindlessBufferUsage::TRANSFER_DST)?;
 		unsafe {
-			Ok(self
-				.platform
+			self.platform
 				.copy_buffer_to_buffer_slice(src, dst)
-				.map_err(Into::<RecordingError<P>>::into)?)
+				.map_err(Into::<RecordingError<P>>::into)
 		}
 	}
 
@@ -138,10 +135,9 @@ impl<'a, P: BindlessPipelinePlatform> Recording<'a, P> {
 		dst_image.has_required_usage(BindlessImageUsage::TRANSFER_DST)?;
 		// TODO soundness: missing bounds checks
 		unsafe {
-			Ok(self
-				.platform
+			self.platform
 				.copy_buffer_to_image(src_buffer, dst_image)
-				.map_err(Into::<RecordingError<P>>::into)?)
+				.map_err(Into::<RecordingError<P>>::into)
 		}
 	}
 
@@ -165,10 +161,9 @@ impl<'a, P: BindlessPipelinePlatform> Recording<'a, P> {
 		dst_buffer.has_required_usage(BindlessBufferUsage::TRANSFER_DST)?;
 		// TODO soundness: missing bounds checks
 		unsafe {
-			Ok(self
-				.platform
+			self.platform
 				.copy_image_to_buffer(src_image, dst_buffer)
-				.map_err(Into::<RecordingError<P>>::into)?)
+				.map_err(Into::<RecordingError<P>>::into)
 		}
 	}
 
@@ -180,10 +175,9 @@ impl<'a, P: BindlessPipelinePlatform> Recording<'a, P> {
 		param: T,
 	) -> Result<(), RecordingError<P>> {
 		unsafe {
-			Ok(self
-				.platform
+			self.platform
 				.dispatch(pipeline, group_counts, param)
-				.map_err(Into::<RecordingError<P>>::into)?)
+				.map_err(Into::<RecordingError<P>>::into)
 		}
 	}
 
@@ -196,10 +190,9 @@ impl<'a, P: BindlessPipelinePlatform> Recording<'a, P> {
 	) -> Result<(), RecordingError<P>> {
 		unsafe {
 			indirect.has_required_usage(BindlessBufferUsage::INDIRECT_BUFFER)?;
-			Ok(self
-				.platform
+			self.platform
 				.dispatch_indirect(pipeline, indirect, param)
-				.map_err(Into::<RecordingError<P>>::into)?)
+				.map_err(Into::<RecordingError<P>>::into)
 		}
 	}
 }

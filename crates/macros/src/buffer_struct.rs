@@ -233,7 +233,7 @@ impl<'a> GenericsVisitor<'a> {
 	}
 }
 
-impl<'a> VisitMut for GenericsVisitor<'a> {
+impl VisitMut for GenericsVisitor<'_> {
 	fn visit_ident_mut(&mut self, i: &mut Ident) {
 		if self.generics.contains(i) {
 			self.found_generics = true;

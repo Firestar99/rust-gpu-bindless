@@ -3,7 +3,7 @@ use crate::backing::table::DrainFlushQueue;
 use crate::descriptor::{
 	Bindless, BindlessBufferCreateInfo, BindlessBufferUsage, BindlessImageCreateInfo, BindlessImageUsage,
 	BindlessSamplerCreateInfo, BufferAllocationError, BufferInterface, BufferSlot, DescriptorCounts,
-	ImageAllocationError, ImageInterface, SamplerAllocationError, SamplerInterface,
+	ImageAllocationError, ImageInterface, SamplerAllocationError, SamplerInterface, WeakBindless,
 };
 use crate::platform::ash::image_format::FormatExt;
 use crate::platform::ash::{
@@ -37,7 +37,6 @@ use std::cell::UnsafeCell;
 use std::ffi::CString;
 use std::mem::size_of;
 use std::ops::Deref;
-use std::sync::{Arc, Weak};
 use thiserror::Error;
 
 pub struct Ash {
@@ -47,7 +46,7 @@ pub struct Ash {
 assert_impl_all!(Bindless<Ash>: Send, Sync);
 
 impl Ash {
-	pub fn new(create_info: AshCreateInfo, bindless: &Weak<Bindless<Self>>) -> VkResult<Self> {
+	pub fn new(create_info: AshCreateInfo, bindless: &WeakBindless<Self>) -> VkResult<Self> {
 		Ok(Ash {
 			execution_manager: AshExecutionManager::new(bindless, &create_info)?,
 			create_info,
@@ -125,8 +124,10 @@ pub struct AshCreateInfo {
 	pub queue: Mutex<ash::vk::Queue>,
 	pub cache: Option<PipelineCache>,
 	pub extensions: AshExtensions,
-	pub destroy: Option<Box<dyn FnOnce(&mut AshCreateInfo) + Send + Sync>>,
+	pub destroy: Option<AshDestroyFn>,
 }
+
+pub type AshDestroyFn = Box<dyn FnOnce(&mut AshCreateInfo) + Send + Sync>;
 
 #[derive(Default)]
 #[non_exhaustive]
@@ -196,13 +197,14 @@ impl AshMemoryAllocation {
 	///
 	/// # Safety
 	/// You must ensure you have exclusive mutable access to the Allocation
+	#[allow(clippy::mut_from_ref)]
 	pub unsafe fn get_mut(&self) -> &mut Allocation {
-		unsafe { (&mut *self.0.get()).as_mut().unwrap() }
+		unsafe { (*self.0.get()).as_mut().unwrap() }
 	}
 
 	/// Take the `AshMemoryAllocation`
 	pub fn take(&self) -> Option<Allocation> {
-		unsafe { (&mut *self.0.get()).take() }
+		unsafe { (*self.0.get()).take() }
 	}
 }
 
@@ -281,7 +283,7 @@ unsafe impl BindlessPlatform for Ash {
 
 	unsafe fn create_platform(
 		create_info: Self::PlatformCreateInfo,
-		bindless_cyclic: &Weak<Bindless<Self>>,
+		bindless_cyclic: &WeakBindless<Self>,
 	) -> VkResult<Self> {
 		Ash::new(create_info, bindless_cyclic)
 	}
@@ -389,11 +391,11 @@ unsafe impl BindlessPlatform for Ash {
 		}
 	}
 
-	unsafe fn bindless_initialized(&self, bindless: &Arc<Bindless<Self>>) {
+	unsafe fn bindless_initialized(&self, bindless: &Bindless<Self>) {
 		self.execution_manager.start_wait_semaphore_thread(bindless);
 	}
 
-	unsafe fn bindless_shutdown(&self, _bindless: &Arc<Bindless<Self>>) {
+	unsafe fn bindless_shutdown(&self, _bindless: &Bindless<Self>) {
 		self.execution_manager.graceful_shutdown().unwrap();
 	}
 
@@ -595,7 +597,7 @@ unsafe impl BindlessPlatform for Ash {
 		})?;
 		self.device
 			.bind_image_memory(image, memory_allocation.memory(), memory_allocation.offset())?;
-		let image_view = self.create_image_view(image, &create_info)?;
+		let image_view = self.create_image_view(image, create_info)?;
 		Ok(AshImage {
 			image,
 			image_view,
@@ -626,7 +628,7 @@ unsafe impl BindlessPlatform for Ash {
 		}
 	}
 
-	unsafe fn mapped_buffer_to_slab<'a>(buffer: &'a BufferSlot<Self>) -> &'a mut (impl Slab + 'a) {
+	unsafe fn mapped_buffer_to_slab(buffer: &BufferSlot<Self>) -> &mut (impl Slab + '_) {
 		buffer.allocation.get_mut()
 	}
 

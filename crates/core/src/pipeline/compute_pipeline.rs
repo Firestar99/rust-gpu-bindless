@@ -8,12 +8,12 @@ use std::sync::Arc;
 
 impl<P: BindlessPipelinePlatform> Bindless<P> {
 	pub fn create_compute_pipeline<T: BufferStruct>(
-		self: &Arc<Self>,
+		&self,
 		compute_shader: &impl BindlessShader<ShaderType = ComputeShader, ParamConstant = T>,
 	) -> Result<BindlessComputePipeline<P, T>, P::PipelineCreationError> {
 		unsafe {
 			Ok(BindlessComputePipeline {
-				pipeline: Arc::new(P::create_compute_pipeline(&self, compute_shader)?),
+				pipeline: Arc::new(P::create_compute_pipeline(self, compute_shader)?),
 				_phantom: PhantomData,
 			})
 		}

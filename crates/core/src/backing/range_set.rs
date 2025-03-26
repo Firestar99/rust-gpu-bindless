@@ -42,7 +42,7 @@ pub struct DescriptorIndexRangeSet<'a, T> {
 	table: &'a T,
 }
 
-impl<'a, T> Clone for DescriptorIndexRangeSet<'a, T> {
+impl<T> Clone for DescriptorIndexRangeSet<'_, T> {
 	fn clone(&self) -> Self {
 		Self {
 			table: self.table,
@@ -86,7 +86,7 @@ impl<'a, T> DescriptorIndexRangeSet<'a, T> {
 	}
 }
 
-impl<'a, I: TableInterface> DescriptorIndexRangeSet<'a, Table<I>> {
+impl<I: TableInterface> DescriptorIndexRangeSet<'_, Table<I>> {
 	pub fn iter_ranges(
 		&self,
 	) -> impl Iterator<
