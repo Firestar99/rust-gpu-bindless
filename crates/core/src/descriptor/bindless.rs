@@ -85,13 +85,13 @@ impl<P: BindlessPlatform> Drop for BindlessInstance<P> {
 	}
 }
 
-impl<P: BindlessPlatform> Bindless<P> {
+impl<P: BindlessPlatform> BindlessInstance<P> {
 	/// Creates a new Descriptors instance with which to allocate descriptors.
 	///
 	/// # Safety
 	/// * There must only be one global Bindless instance for each [`Device`].
 	/// * The [general bindless safety requirements](crate#safety) apply
-	pub unsafe fn new(ci: P::PlatformCreateInfo, counts: DescriptorCounts) -> BindlessInstance<P> {
+	pub unsafe fn new(ci: P::PlatformCreateInfo, counts: DescriptorCounts) -> Self {
 		let bindless = Bindless(Arc::new_cyclic(|weak| {
 			let weak = WeakBindless(weak.clone());
 			// TODO propagate error
@@ -111,7 +111,9 @@ impl<P: BindlessPlatform> Bindless<P> {
 		bindless.platform.bindless_initialized(&bindless);
 		BindlessInstance(bindless)
 	}
+}
 
+impl<P: BindlessPlatform> Bindless<P> {
 	#[inline(never)]
 	fn unreachable_bindless_dropped() -> ! {
 		unreachable!("Bindless has most likely been dropped");

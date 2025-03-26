@@ -5,8 +5,8 @@ use approx::assert_relative_eq;
 use integration_test_shader::buffer_barriers::{CopyParam, COMPUTE_COPY_WG};
 use pollster::block_on;
 use rust_gpu_bindless_core::descriptor::{
-	Bindless, BindlessAllocationScheme, BindlessBufferCreateInfo, BindlessBufferUsage, DescriptorCounts,
-	MutDescBufferExt,
+	Bindless, BindlessAllocationScheme, BindlessBufferCreateInfo, BindlessBufferUsage, BindlessInstance,
+	DescriptorCounts, MutDescBufferExt,
 };
 use rust_gpu_bindless_core::pipeline::{HostAccess, MutBufferAccessExt, ShaderRead, ShaderReadWrite};
 use rust_gpu_bindless_core::platform::ash::{ash_init_single_graphics_queue, Ash, AshSingleGraphicsQueueCreateInfo};
@@ -15,7 +15,7 @@ use rust_gpu_bindless_core::platform::BindlessPipelinePlatform;
 #[test]
 fn test_buffer_barrier_ash() -> anyhow::Result<()> {
 	unsafe {
-		let bindless = Bindless::<Ash>::new(
+		let bindless = BindlessInstance::<Ash>::new(
 			ash_init_single_graphics_queue(AshSingleGraphicsQueueCreateInfo {
 				debug: debugger(),
 				..AshSingleGraphicsQueueCreateInfo::default()

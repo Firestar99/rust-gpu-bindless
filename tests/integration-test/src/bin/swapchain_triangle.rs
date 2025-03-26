@@ -8,7 +8,7 @@ use integration_test_shader::color::ColorEnum;
 use integration_test_shader::triangle::{Param, Vertex};
 use rust_gpu_bindless_core::descriptor::{
 	Bindless, BindlessAllocationScheme, BindlessBufferCreateInfo, BindlessBufferUsage, BindlessImageUsage,
-	DescriptorCounts, Format, Image2d, MutDesc, MutImage, RCDescExt,
+	BindlessInstance, DescriptorCounts, Format, Image2d, MutDesc, MutImage, RCDescExt,
 };
 use rust_gpu_bindless_core::pipeline::DrawIndirectCommand;
 use rust_gpu_bindless_core::pipeline::{
@@ -55,7 +55,7 @@ pub async fn main_loop(event_loop: EventLoopExecutor, events: Receiver<Event<()>
 		.await?;
 
 	let bindless = unsafe {
-		Bindless::<Ash>::new(
+		BindlessInstance::<Ash>::new(
 			ash_init_single_graphics_queue(AshSingleGraphicsQueueCreateInfo {
 				instance_extensions: window_extensions,
 				extensions: &[ash::khr::swapchain::NAME],

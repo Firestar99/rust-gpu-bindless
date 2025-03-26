@@ -5,7 +5,7 @@ use glam::UVec2;
 use pollster::block_on;
 use rust_gpu_bindless_core::descriptor::{
 	Bindless, BindlessAllocationScheme, BindlessBufferCreateInfo, BindlessBufferUsage, BindlessImageCreateInfo,
-	BindlessImageUsage, DescriptorCounts, Extent, Format, Image2d, MutDescBufferExt,
+	BindlessImageUsage, BindlessInstance, DescriptorCounts, Extent, Format, Image2d, MutDescBufferExt,
 };
 use rust_gpu_bindless_core::pipeline::{
 	HostAccess, MutBufferAccessExt, MutImageAccessExt, TransferRead, TransferWrite,
@@ -16,7 +16,7 @@ use rust_gpu_bindless_core::platform::BindlessPipelinePlatform;
 #[test]
 fn test_image_copy_ash() -> anyhow::Result<()> {
 	unsafe {
-		let bindless = Bindless::<Ash>::new(
+		let bindless = BindlessInstance::<Ash>::new(
 			ash_init_single_graphics_queue(AshSingleGraphicsQueueCreateInfo {
 				debug: debugger(),
 				..AshSingleGraphicsQueueCreateInfo::default()

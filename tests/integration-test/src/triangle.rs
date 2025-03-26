@@ -11,7 +11,8 @@ use integration_test_shader::triangle::{Param, Vertex};
 use pollster::block_on;
 use rust_gpu_bindless_core::descriptor::{
 	Bindless, BindlessAllocationScheme, BindlessBufferCreateInfo, BindlessBufferUsage, BindlessImageCreateInfo,
-	BindlessImageUsage, DescBufferLenExt, DescriptorCounts, Extent, Format, Image2d, MutDescBufferExt, RCDescExt,
+	BindlessImageUsage, BindlessInstance, DescBufferLenExt, DescriptorCounts, Extent, Format, Image2d,
+	MutDescBufferExt, RCDescExt,
 };
 use rust_gpu_bindless_core::pipeline::{
 	ClearValue, ColorAttachment, DrawIndirectCommand, GraphicsPipelineCreateInfo, HostAccess, LoadOp,
@@ -30,7 +31,7 @@ const Y: ColorEnum = ColorEnum::Yellow;
 #[test]
 fn test_triangle_ash() -> anyhow::Result<()> {
 	unsafe {
-		let bindless = Bindless::<Ash>::new(
+		let bindless = BindlessInstance::<Ash>::new(
 			ash_init_single_graphics_queue(AshSingleGraphicsQueueCreateInfo {
 				debug: debugger(),
 				..AshSingleGraphicsQueueCreateInfo::default()
