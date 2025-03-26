@@ -18,6 +18,7 @@ ash = []
 rust-gpu-bindless-shaders = { workspace = true }
 
 # device
+spirv-std = { workspace = true }
 ash = { workspace = true }
 gpu-allocator = { workspace = true }
 presser = { workspace = true }

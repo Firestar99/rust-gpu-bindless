@@ -4,7 +4,6 @@ use crate::descriptor::{
 };
 use crate::pipeline::{ClearValue, ImageAccessType, IndexType, LoadOp, RenderingAttachment, StoreOp};
 use crate::platform::ash::Ash;
-use crate::spirv_std::image::{Arrayed, Dimensionality};
 use ash::vk::{
 	AttachmentLoadOp, AttachmentStoreOp, Extent2D, ImageLayout, ImageType as VkImageType, RenderingAttachmentInfo,
 	ShaderStageFlags,
@@ -14,6 +13,7 @@ use gpu_allocator::vulkan::AllocationScheme;
 use gpu_allocator::MemoryLocation;
 use rust_gpu_bindless_shaders::descriptor::ImageType;
 use rust_gpu_bindless_shaders::shader_type::Shader;
+use spirv_std::image::{Arrayed, Dimensionality};
 
 impl BindlessAllocationScheme {
 	pub fn to_gpu_allocator_buffer(&self, buffer: ash::vk::Buffer) -> AllocationScheme {

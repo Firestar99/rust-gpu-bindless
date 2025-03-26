@@ -3,8 +3,8 @@ pub mod descriptor;
 pub mod pipeline;
 pub mod platform;
 
-pub use ash::vk::make_api_version;
-pub use rust_gpu_bindless_shaders::buffer_content;
-pub use rust_gpu_bindless_shaders::shader;
-pub use rust_gpu_bindless_shaders::shader_type;
-pub use rust_gpu_bindless_shaders::{spirv, spirv_std, Image};
+pub mod __private {
+	pub use ash::vk::make_api_version;
+	pub use rust_gpu_bindless_shaders::__private::*;
+	pub use rust_gpu_bindless_shaders::{shader, shader_type};
+}

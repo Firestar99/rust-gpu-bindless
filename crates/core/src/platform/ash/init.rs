@@ -92,7 +92,7 @@ macro_rules! app_config_from_cargo {
 	() => {
 		$crate::platform::ash::init::AppConfig {
 			name: env!("CARGO_PKG_NAME"),
-			version: $crate::make_api_version(
+			version: $crate::__private::make_api_version(
 				0,
 				$crate::platform::ash::init::compile_time_parse(env!("CARGO_PKG_VERSION_MAJOR")),
 				$crate::platform::ash::init::compile_time_parse(env!("CARGO_PKG_VERSION_MINOR")),

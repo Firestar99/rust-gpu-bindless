@@ -21,8 +21,8 @@ use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 use thiserror::Error;
 
-pub type DrawIndexedIndirectCommand = crate::spirv_std::indirect_command::DrawIndexedIndirectCommand;
-pub type DrawIndirectCommand = crate::spirv_std::indirect_command::DrawIndirectCommand;
+pub type DrawIndexedIndirectCommand = spirv_std::indirect_command::DrawIndexedIndirectCommand;
+pub type DrawIndirectCommand = spirv_std::indirect_command::DrawIndirectCommand;
 
 /// A RenderPass defines the formats of the color and depth attachments.
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]

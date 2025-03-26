@@ -2041,6 +2041,7 @@ dependencies = [
  "rangemap",
  "rust-gpu-bindless-shaders",
  "smallvec",
+ "spirv-std",
  "static_assertions",
  "thiserror 2.0.12",
 ]

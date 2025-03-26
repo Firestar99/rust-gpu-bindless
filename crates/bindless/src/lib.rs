@@ -55,3 +55,7 @@ pub mod pipeline {
 pub mod platform {
 	pub use rust_gpu_bindless_core::platform::*;
 }
+
+pub mod __private {
+	pub use rust_gpu_bindless_core::__private::*;
+}
