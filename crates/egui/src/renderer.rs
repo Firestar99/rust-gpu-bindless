@@ -11,18 +11,18 @@ use egui::{
 };
 use glam::{IVec2, UVec2};
 use parking_lot::Mutex;
-use rust_gpu_bindless::generic::descriptor::{
+use rust_gpu_bindless_core::descriptor::{
 	Bindless, BindlessAllocationScheme, BindlessBufferCreateInfo, BindlessBufferUsage, BindlessImageCreateInfo,
 	BindlessImageUsage, BindlessSamplerCreateInfo, BufferAllocationError, Extent, Filter, Format, Image2d,
 	ImageDescExt, MutBoxDescExt, MutDesc, MutDescBufferExt, MutDescExt, MutImage, RCDesc, RCDescExt, Sampler,
 	SamplerAllocationError,
 };
-use rust_gpu_bindless::generic::pipeline::{
+use rust_gpu_bindless_core::pipeline::{
 	BindlessGraphicsPipeline, ColorAttachment, DepthStencilAttachment, GraphicsPipelineCreateInfo, HasResourceContext,
 	ImageAccessType, LoadOp, MutBufferAccessExt, MutImageAccess, MutImageAccessExt, Recording, RecordingError,
 	RenderPassFormat, RenderingAttachment, StoreOp, TransferRead, TransferWrite,
 };
-use rust_gpu_bindless::generic::platform::RecordingResourceContext;
+use rust_gpu_bindless_core::platform::RecordingResourceContext;
 use rust_gpu_bindless_egui_shaders::{Param, ParamFlags, Vertex};
 use rust_gpu_bindless_shaders::descriptor::{Buffer, Image, UnsafeDesc};
 use rust_gpu_bindless_shaders::spirv_std::indirect_command::DrawIndexedIndirectCommand;
