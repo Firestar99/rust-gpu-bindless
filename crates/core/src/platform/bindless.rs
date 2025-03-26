@@ -82,7 +82,8 @@ pub unsafe trait BindlessPlatform: Sized + Send + Sync + 'static {
 	/// Turn a mapped Buffer into a Slab. You may assume that the buffer is mappable, aka. has either
 	/// [`BindlessBufferUsage::MAP_WRITE`] or [`BindlessBufferUsage::MAP_READ`]. You also have exclusive access
 	/// to the Buffer.
-	unsafe fn mapped_buffer_to_slab<'a>(buffer: &'a BufferSlot<Self>) -> &'a mut (impl presser::Slab + 'a);
+	#[allow(clippy::mut_from_ref)]
+	unsafe fn mapped_buffer_to_slab(buffer: &BufferSlot<Self>) -> &mut (impl presser::Slab + '_);
 
 	/// Destroy specified buffers. You have exclusive access to the associated [`BufferSlot`]s, even if they are just
 	/// passed by standard reference. After this method call returns, the [`BufferSlot`] will be dropped and otherwise

@@ -237,7 +237,7 @@ impl<P: EguiBindlessPlatform> EguiRenderContext<P> {
 	fn free_textures(&mut self, texture_delta: &TexturesDelta) -> Result<(), EguiRenderingError<P>> {
 		profiling::function_scope!();
 		for texture_id in &self.textures_free_queued {
-			self.textures.remove(&texture_id);
+			self.textures.remove(texture_id);
 		}
 		self.textures_free_queued.clear();
 		self.textures_free_queued.extend_from_slice(&texture_delta.free);
@@ -485,7 +485,7 @@ impl Default for EguiRenderingOptions {
 	}
 }
 
-impl<'b, P: EguiBindlessPlatform> EguiRenderOutput<'b, P> {
+impl<P: EguiBindlessPlatform> EguiRenderOutput<'_, P> {
 	/// render scale for window platforms
 	pub(crate) fn render_scale(&mut self, scale: f32) {
 		self.render_scale *= scale;
@@ -599,6 +599,7 @@ impl<'b, P: EguiBindlessPlatform> EguiRenderOutput<'b, P> {
 	}
 }
 
+#[allow(clippy::type_complexity)]
 fn check_format_mismatch<'a, 'b, P: EguiBindlessPlatform, A: ImageAccessType>(
 	format: Option<Format>,
 	image: Option<&'a mut MutImageAccess<'b, P, Image2d, A>>,

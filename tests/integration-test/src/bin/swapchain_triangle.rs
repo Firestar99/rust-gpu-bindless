@@ -177,7 +177,7 @@ impl<P: BindlessPipelinePlatform> TriangleRenderer<P> {
 			self.generate_vertices().into_iter(),
 		)?;
 		let rt = self.bindless.execute(|cmd| {
-			let mut rt = rt.access_dont_care::<ColorAttachment>(&cmd)?;
+			let mut rt = rt.access_dont_care::<ColorAttachment>(cmd)?;
 			cmd.begin_rendering(
 				self.rt_format.to_render_pass_format(),
 				&[RenderingAttachment {

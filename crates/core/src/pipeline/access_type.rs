@@ -1,3 +1,6 @@
+// All AccessType traits are unsafe and don't need a safety section
+#![allow(clippy::missing_safety_doc)]
+
 use crate::descriptor::{BindlessBufferUsage, BindlessImageUsage};
 use num_derive::{FromPrimitive, ToPrimitive};
 
@@ -93,10 +96,12 @@ impl ImageAccess {
 	}
 }
 
+/// AccessType of a Buffer
 pub unsafe trait BufferAccessType {
 	const BUFFER_ACCESS: BufferAccess;
 }
 
+/// AccessType of an Image
 pub unsafe trait ImageAccessType {
 	const IMAGE_ACCESS: ImageAccess;
 }

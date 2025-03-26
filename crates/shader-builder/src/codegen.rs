@@ -24,7 +24,7 @@ pub fn codegen_shader_symbols<'a>(
 
 	let mut root = ModNode::root();
 	for shader in shaders {
-		root.insert(shader.0.split("::").map(|s| Cow::Borrowed(s)), shader)?;
+		root.insert(shader.0.split("::").map(Cow::Borrowed), shader)?;
 	}
 	let tokens = root.to_tokens(|shader_ident, (entry_point_name, spv_path)| {
 		let mut mod_path = syn::parse_str::<Path>(entry_point_name).unwrap();

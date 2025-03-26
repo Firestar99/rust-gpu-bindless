@@ -264,9 +264,9 @@ impl<'a> AshRecordingContext<'a> {
 			device.cmd_pipeline_barrier2(
 				self.cmd,
 				&DependencyInfo::default()
-					.memory_barriers(&*collector.memory)
-					.buffer_memory_barriers(&*collector.buffers)
-					.image_memory_barriers(&*collector.image),
+					.memory_barriers(&collector.memory)
+					.buffer_memory_barriers(&collector.buffers)
+					.image_memory_barriers(&collector.image),
 			);
 			collector.memory.clear();
 			collector.buffers.clear();
@@ -281,7 +281,7 @@ impl<'a> AshRecordingContext<'a> {
 			Ok(())
 		} else {
 			Err(AshRecordingError::BarrierWhileRendering {
-				collector: collector.clone(),
+				collector: Box::new(collector.clone()),
 			})
 		}
 	}
@@ -535,7 +535,7 @@ pub enum AshRecordingError {
 	#[error("Vk Error: {0}")]
 	Vk(#[from] ash::vk::Result),
 	#[error("No barriers must be inserted while rendering: {collector:?}")]
-	BarrierWhileRendering { collector: AshBarrierCollector },
+	BarrierWhileRendering { collector: Box<AshBarrierCollector> },
 }
 
 impl Debug for AshRecordingError {

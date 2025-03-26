@@ -39,7 +39,7 @@ impl<'a, P: BindlessPipelinePlatform> Deref for Recording<'a, P> {
 	}
 }
 
-impl<'a, P: BindlessPipelinePlatform> DerefMut for Recording<'a, P> {
+impl<P: BindlessPipelinePlatform> DerefMut for Recording<'_, P> {
 	fn deref_mut(&mut self) -> &mut Self::Target {
 		&mut self.platform
 	}
@@ -94,10 +94,9 @@ impl<'a, P: BindlessPipelinePlatform> Recording<'a, P> {
 		src.has_required_usage(BindlessBufferUsage::TRANSFER_SRC)?;
 		dst.has_required_usage(BindlessBufferUsage::TRANSFER_DST)?;
 		unsafe {
-			Ok(self
-				.platform
+			self.platform
 				.copy_buffer_to_buffer(src, dst)
-				.map_err(Into::<RecordingError<P>>::into)?)
+				.map_err(Into::<RecordingError<P>>::into)
 		}
 	}
 
@@ -114,10 +113,9 @@ impl<'a, P: BindlessPipelinePlatform> Recording<'a, P> {
 		src.has_required_usage(BindlessBufferUsage::TRANSFER_SRC)?;
 		dst.has_required_usage(BindlessBufferUsage::TRANSFER_DST)?;
 		unsafe {
-			Ok(self
-				.platform
+			self.platform
 				.copy_buffer_to_buffer_slice(src, dst)
-				.map_err(Into::<RecordingError<P>>::into)?)
+				.map_err(Into::<RecordingError<P>>::into)
 		}
 	}
 
@@ -137,10 +135,9 @@ impl<'a, P: BindlessPipelinePlatform> Recording<'a, P> {
 		dst_image.has_required_usage(BindlessImageUsage::TRANSFER_DST)?;
 		// TODO soundness: missing bounds checks
 		unsafe {
-			Ok(self
-				.platform
+			self.platform
 				.copy_buffer_to_image(src_buffer, dst_image)
-				.map_err(Into::<RecordingError<P>>::into)?)
+				.map_err(Into::<RecordingError<P>>::into)
 		}
 	}
 
@@ -164,10 +161,9 @@ impl<'a, P: BindlessPipelinePlatform> Recording<'a, P> {
 		dst_buffer.has_required_usage(BindlessBufferUsage::TRANSFER_DST)?;
 		// TODO soundness: missing bounds checks
 		unsafe {
-			Ok(self
-				.platform
+			self.platform
 				.copy_image_to_buffer(src_image, dst_buffer)
-				.map_err(Into::<RecordingError<P>>::into)?)
+				.map_err(Into::<RecordingError<P>>::into)
 		}
 	}
 
@@ -179,10 +175,9 @@ impl<'a, P: BindlessPipelinePlatform> Recording<'a, P> {
 		param: T,
 	) -> Result<(), RecordingError<P>> {
 		unsafe {
-			Ok(self
-				.platform
+			self.platform
 				.dispatch(pipeline, group_counts, param)
-				.map_err(Into::<RecordingError<P>>::into)?)
+				.map_err(Into::<RecordingError<P>>::into)
 		}
 	}
 
@@ -195,10 +190,9 @@ impl<'a, P: BindlessPipelinePlatform> Recording<'a, P> {
 	) -> Result<(), RecordingError<P>> {
 		unsafe {
 			indirect.has_required_usage(BindlessBufferUsage::INDIRECT_BUFFER)?;
-			Ok(self
-				.platform
+			self.platform
 				.dispatch_indirect(pipeline, indirect, param)
-				.map_err(Into::<RecordingError<P>>::into)?)
+				.map_err(Into::<RecordingError<P>>::into)
 		}
 	}
 }

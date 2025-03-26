@@ -40,7 +40,7 @@ impl<P: BindlessPlatform> DescTable<P> for BufferTable<P> {
 	type Slot = BufferSlot<P>;
 
 	fn get_slot(slot: &RcTableSlot) -> &Self::Slot {
-		&slot.try_deref::<BufferInterface<P>>().unwrap()
+		slot.try_deref::<BufferInterface<P>>().unwrap()
 	}
 }
 
@@ -98,7 +98,7 @@ impl<P: BindlessPlatform> TableInterface for BufferInterface<P> {
 			if let Some(bindless) = self.bindless.upgrade() {
 				bindless
 					.platform
-					.destroy_buffers(&bindless.global_descriptor_set(), indices);
+					.destroy_buffers(bindless.global_descriptor_set(), indices);
 			}
 		}
 	}
@@ -110,7 +110,7 @@ impl<P: BindlessPlatform> TableInterface for BufferInterface<P> {
 
 pub struct BufferTableAccess<'a, P: BindlessPlatform>(pub &'a Bindless<P>);
 
-impl<'a, P: BindlessPlatform> Deref for BufferTableAccess<'a, P> {
+impl<P: BindlessPlatform> Deref for BufferTableAccess<'_, P> {
 	type Target = BufferTable<P>;
 
 	#[inline]
@@ -161,7 +161,7 @@ impl BindlessBufferUsage {
 	}
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Default)]
 pub struct BindlessBufferCreateInfo<'a> {
 	/// Buffer usage specify how you may use a buffer. Missing flags are only validated during runtime.
 	pub usage: BindlessBufferUsage,
@@ -171,17 +171,7 @@ pub struct BindlessBufferCreateInfo<'a> {
 	pub name: &'a str,
 }
 
-impl<'a> Default for BindlessBufferCreateInfo<'a> {
-	fn default() -> Self {
-		Self {
-			usage: BindlessBufferUsage::default(),
-			allocation_scheme: BindlessAllocationScheme::default(),
-			name: "",
-		}
-	}
-}
-
-impl<'a> BindlessBufferCreateInfo<'a> {
+impl BindlessBufferCreateInfo<'_> {
 	#[inline]
 	pub fn validate<P: BindlessPlatform>(&self) -> Result<(), BufferAllocationError<P>> {
 		if self.usage.is_empty() {
@@ -210,7 +200,7 @@ impl<P: BindlessPlatform> Debug for BufferAllocationError<P> {
 	}
 }
 
-impl<'a, P: BindlessPlatform> BufferTableAccess<'a, P> {
+impl<P: BindlessPlatform> BufferTableAccess<'_, P> {
 	/// Allocates a new slot for the supplied buffer
 	///
 	/// # Safety
@@ -331,6 +321,10 @@ impl<'a, P: BindlessPlatform> BufferTableAccess<'a, P> {
 
 pub trait DescBufferLenExt<P: BindlessPlatform> {
 	fn len(&self) -> usize;
+
+	fn is_empty(&self) -> bool {
+		self.len() == 0
+	}
 }
 
 impl<P: BindlessPlatform, T: BufferStruct> DescBufferLenExt<P> for RCDesc<P, Buffer<[T]>> {
@@ -434,13 +428,13 @@ pub struct MappedBuffer<'a, P: BindlessPlatform, T: BufferContent + ?Sized> {
 	_phantom: PhantomData<T>,
 }
 
-impl<'a, P: BindlessPlatform, T: BufferContent + ?Sized> Drop for MappedBuffer<'a, P, T> {
+impl<P: BindlessPlatform, T: BufferContent + ?Sized> Drop for MappedBuffer<'_, P, T> {
 	fn drop(&mut self) {
 		self.slot.access_lock.unlock(self.curr_access);
 	}
 }
 
-impl<'a, P: BindlessPlatform, T: BufferContent + ?Sized> MappedBuffer<'a, P, T> {
+impl<P: BindlessPlatform, T: BufferContent + ?Sized> MappedBuffer<'_, P, T> {
 	/// Assume that the **following** operations will completely overwrite the buffer.
 	///
 	/// # Safety
@@ -452,18 +446,18 @@ impl<'a, P: BindlessPlatform, T: BufferContent + ?Sized> MappedBuffer<'a, P, T> 
 
 	unsafe fn slab_slice(&mut self) -> &mut [u8] {
 		unsafe {
-			let slab = P::mapped_buffer_to_slab(&self.slot);
+			let slab = P::mapped_buffer_to_slab(self.slot);
 			&mut slab.assume_initialized_as_bytes_mut()[0..self.slot.size as usize]
 		}
 	}
 }
 
-impl<'a, P: BindlessPlatform, T: BufferStruct> MappedBuffer<'a, P, T> {
+impl<P: BindlessPlatform, T: BufferStruct> MappedBuffer<'_, P, T> {
 	/// Copy data `T` to buffer. Implicitly, it will fully overwrite the buffer.
 	pub fn write_data(&mut self, t: T) {
 		unsafe {
 			let mut meta = StrongMetadataCpu::new(&self.table_sync, Metadata {});
-			let slab = P::mapped_buffer_to_slab(&self.slot);
+			let slab = P::mapped_buffer_to_slab(self.slot);
 			let record = presser::copy_from_slice_to_offset(&[T::write_cpu(t, &mut meta)], slab, 0).unwrap();
 			assert_eq!(record.copy_start_offset, 0, "presser must not add padding");
 			*self.slot.strong_refs.lock() = meta.into_backing_refs();
@@ -480,9 +474,13 @@ impl<'a, P: BindlessPlatform, T: BufferStruct> MappedBuffer<'a, P, T> {
 	}
 }
 
-impl<'a, P: BindlessPlatform, T: BufferStruct> MappedBuffer<'a, P, [T]> {
+impl<P: BindlessPlatform, T: BufferStruct> MappedBuffer<'_, P, [T]> {
 	pub fn len(&self) -> usize {
 		self.slot.len
+	}
+
+	pub fn is_empty(&self) -> bool {
+		self.len() == 0
 	}
 
 	/// Copy from `iter` of `T` into the Buffer slice.
@@ -491,7 +489,7 @@ impl<'a, P: BindlessPlatform, T: BufferStruct> MappedBuffer<'a, P, [T]> {
 	pub fn overwrite_from_iter_exact(&mut self, iter: impl Iterator<Item = T>) {
 		unsafe {
 			let mut meta = StrongMetadataCpu::new(&self.table_sync, Metadata {});
-			let slab = P::mapped_buffer_to_slab(&self.slot);
+			let slab = P::mapped_buffer_to_slab(self.slot);
 			let mut written = 0;
 			let record = presser::copy_from_iter_to_offset_with_align_packed(
 				iter.map(|i| {
@@ -529,7 +527,7 @@ impl<'a, P: BindlessPlatform, T: BufferStruct> MappedBuffer<'a, P, [T]> {
 	pub fn write_offset(&mut self, index: usize, t: T) {
 		unsafe {
 			let mut meta = StrongMetadataCpu::new(&self.table_sync, Metadata {});
-			let slab = P::mapped_buffer_to_slab(&self.slot);
+			let slab = P::mapped_buffer_to_slab(self.slot);
 			let start_offset = index * size_of::<T::Transfer>();
 			let record = presser::copy_from_slice_to_offset(&[T::write_cpu(t, &mut meta)], slab, start_offset).unwrap();
 			assert_eq!(record.copy_start_offset, start_offset, "presser must not add padding");
@@ -538,7 +536,7 @@ impl<'a, P: BindlessPlatform, T: BufferStruct> MappedBuffer<'a, P, [T]> {
 	}
 }
 
-impl<'a, P: BindlessPlatform, T: BufferStruct + Clone> MappedBuffer<'a, P, [T]> {
+impl<P: BindlessPlatform, T: BufferStruct + Clone> MappedBuffer<'_, P, [T]> {
 	/// Copy from `iter` of `T` into the Buffer slice.
 	/// If the iterator yields too few elements to fill the buffer, the remaining elements are filled
 	pub fn overwrite_from_iter_and_fill(&mut self, iter: impl Iterator<Item = T>, fill: T) {
@@ -546,7 +544,7 @@ impl<'a, P: BindlessPlatform, T: BufferStruct + Clone> MappedBuffer<'a, P, [T]> 
 	}
 }
 
-impl<'a, P: BindlessPlatform, T: BufferStruct + Default> MappedBuffer<'a, P, [T]> {
+impl<P: BindlessPlatform, T: BufferStruct + Default> MappedBuffer<'_, P, [T]> {
 	/// Copy from `iter` of `T` into the Buffer slice.
 	/// If the iterator yields too few elements to fill the buffer, the remaining elements are filled with
 	/// [`Default::default`]
@@ -557,7 +555,7 @@ impl<'a, P: BindlessPlatform, T: BufferStruct + Default> MappedBuffer<'a, P, [T]
 
 // TODO soundness: these methods may allow reading uninitialized buffers, there is no mechanic to ensure they're
 //  initialized
-impl<'a, P: BindlessPlatform, T: BufferStruct> MappedBuffer<'a, P, [T]> {
+impl<P: BindlessPlatform, T: BufferStruct> MappedBuffer<'_, P, [T]> {
 	pub fn read_offset(&mut self, index: usize) -> T {
 		// Safety: assume_initialized_as_bytes is safe if this struct has been initialized, and all
 		// mapped buffers are initialized (not yet)
@@ -577,13 +575,15 @@ impl<'a, P: BindlessPlatform, T: BufferStruct> MappedBuffer<'a, P, [T]> {
 	}
 }
 
-impl<'a, P: BindlessPlatform, T: BufferStructIdentity> MappedBuffer<'a, P, T> {
+/// DerefMut requires Deref, but we must take `&mut self`
+#[allow(clippy::should_implement_trait)]
+impl<P: BindlessPlatform, T: BufferStructIdentity> MappedBuffer<'_, P, T> {
 	pub fn deref_mut(&mut self) -> &mut T {
 		unsafe { &mut bytemuck::cast_slice_mut::<u8, T>(self.slab_slice())[0] }
 	}
 }
 
-impl<'a, P: BindlessPlatform, T: BufferStructIdentity> MappedBuffer<'a, P, [T]> {
+impl<P: BindlessPlatform, T: BufferStructIdentity> MappedBuffer<'_, P, [T]> {
 	pub fn as_mut_slice(&mut self) -> &mut [T] {
 		unsafe { bytemuck::cast_slice_mut::<u8, T>(self.slab_slice()) }
 	}
@@ -594,7 +594,7 @@ pub struct StrongBackingRefs<P: BindlessPlatform>(pub SmallVec<[AnyRCDesc<P>; 5]
 
 impl<P: BindlessPlatform> Clone for StrongBackingRefs<P> {
 	fn clone(&self) -> Self {
-		Self { 0: self.0.clone() }
+		Self(self.0.clone())
 	}
 }
 

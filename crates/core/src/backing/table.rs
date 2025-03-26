@@ -207,7 +207,7 @@ pub struct FlushGuard<'a> {
 	_guard: MutexGuard<'a, ()>,
 }
 
-impl<'a> FlushGuard<'a> {
+impl FlushGuard<'_> {
 	pub fn flush(&self) {
 		for table_lock in &self.table_sync.tables {
 			if let Some(table) = table_lock.read().as_ref() {
@@ -506,7 +506,7 @@ impl<'a, I: TableInterface> DescriptorIndexIterator<'a, I> for &mut DrainFlushQu
 	}
 }
 
-impl<'a, I: TableInterface> Iterator for DrainFlushQueue<'a, I> {
+impl<I: TableInterface> Iterator for DrainFlushQueue<'_, I> {
 	type Item = DescriptorIndex;
 
 	fn next(&mut self) -> Option<Self::Item> {

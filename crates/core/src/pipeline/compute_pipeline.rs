@@ -13,7 +13,7 @@ impl<P: BindlessPipelinePlatform> Bindless<P> {
 	) -> Result<BindlessComputePipeline<P, T>, P::PipelineCreationError> {
 		unsafe {
 			Ok(BindlessComputePipeline {
-				pipeline: Arc::new(P::create_compute_pipeline(&self, compute_shader)?),
+				pipeline: Arc::new(P::create_compute_pipeline(self, compute_shader)?),
 				_phantom: PhantomData,
 			})
 		}

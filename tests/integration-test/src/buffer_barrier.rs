@@ -51,7 +51,7 @@ async fn test_buffer_barrier<P: BindlessPipelinePlatform>(bindless: &Bindless<P>
 		let second = second.access_as_undefined::<ShaderReadWrite>(cmd)?;
 
 		// 2. does a dispatch to copy from `first` to `second`
-		let wgs = (len as u32 + COMPUTE_COPY_WG - 1) / COMPUTE_COPY_WG;
+		let wgs = (len as u32).div_ceil(COMPUTE_COPY_WG);
 		cmd.dispatch(
 			&compute,
 			[wgs, 1, 1],

@@ -95,7 +95,7 @@ impl<'a, P: BindlessPipelinePlatform, T: ImageType, A: ImageAccessType> MutImage
 		unsafe {
 			self.has_required_usage(dst.required_image_usage())?;
 			if src != dst {
-				self.resource_context.transition_image(&self.inner_slot(), src, dst)
+				self.resource_context.transition_image(self.inner_slot(), src, dst)
 			}
 			Ok(())
 		}
@@ -131,7 +131,7 @@ impl<'a, P: BindlessPipelinePlatform, T: ImageType, A: ImageAccessType> MutImage
 	}
 }
 
-impl<'a, P: BindlessPipelinePlatform, T: ImageType, A: ImageAccessType> ImageDescExt for MutImageAccess<'a, P, T, A> {
+impl<P: BindlessPipelinePlatform, T: ImageType, A: ImageAccessType> ImageDescExt for MutImageAccess<'_, P, T, A> {
 	fn extent(&self) -> Extent {
 		unsafe { self.inner_slot().extent }
 	}
@@ -142,7 +142,7 @@ impl<'a, P: BindlessPipelinePlatform, T: ImageType, A: ImageAccessType> ImageDes
 }
 
 // TODO soundness: general layout may create Mut and ReadOnly Desc of a single Image. Aliasing them is UB in vulkan.
-impl<'a, P: BindlessPipelinePlatform, T: ImageType, A: ImageAccessType + ShaderReadable> MutImageAccess<'a, P, T, A> {
+impl<P: BindlessPipelinePlatform, T: ImageType, A: ImageAccessType + ShaderReadable> MutImageAccess<'_, P, T, A> {
 	pub fn to_transient_storage(&self) -> Result<TransientDesc<Image<T>>, AccessError> {
 		self.has_required_usage(BindlessImageUsage::STORAGE)?;
 		// Safety: mutable resource is in a layout that implements ShaderReadable, so it is readable by a shader
@@ -155,7 +155,7 @@ impl<'a, P: BindlessPipelinePlatform, T: ImageType, A: ImageAccessType + ShaderR
 	}
 }
 
-impl<'a, P: BindlessPipelinePlatform, T: ImageType, A: ImageAccessType + ShaderSampleable> MutImageAccess<'a, P, T, A> {
+impl<P: BindlessPipelinePlatform, T: ImageType, A: ImageAccessType + ShaderSampleable> MutImageAccess<'_, P, T, A> {
 	pub fn to_transient_sampled(&self) -> Result<TransientDesc<Image<T>>, AccessError> {
 		self.has_required_usage(BindlessImageUsage::SAMPLED)?;
 		// Safety: mutable resource is in a layout that implements ShaderReadable, so it is readable by a shader
@@ -168,9 +168,7 @@ impl<'a, P: BindlessPipelinePlatform, T: ImageType, A: ImageAccessType + ShaderS
 	}
 }
 
-impl<'a, P: BindlessPipelinePlatform, T: ImageType, A: ImageAccessType + ShaderReadWriteable>
-	MutImageAccess<'a, P, T, A>
-{
+impl<P: BindlessPipelinePlatform, T: ImageType, A: ImageAccessType + ShaderReadWriteable> MutImageAccess<'_, P, T, A> {
 	pub fn to_mut_transient(&self) -> TransientDesc<MutImage<T>> {
 		self.try_to_mut_transient().unwrap()
 	}

@@ -1,4 +1,4 @@
-use crate::descriptor::{Bindless, Format};
+use crate::descriptor::Bindless;
 use crate::pipeline::{
 	GraphicsPipelineCreateInfo, MeshGraphicsPipelineCreateInfo, PipelineColorBlendStateCreateInfo,
 	PipelineDepthStencilStateCreateInfo, PipelineInputAssemblyStateCreateInfo, Recording, RecordingError,
@@ -75,7 +75,7 @@ unsafe impl BindlessPipelinePlatform for Ash {
 	) -> Result<Self::GraphicsPipeline, Self::PipelineCreationError> {
 		let vertex = AshShaderModule::new(bindless, vertex_shader)?;
 		let fragment = AshShaderModule::new(bindless, fragment_shader)?;
-		Ok(AshGraphicsPipeline(Self::ash_create_abstract_graphics_pipeline::<T>(
+		Ok(AshGraphicsPipeline(Self::ash_create_abstract_graphics_pipeline(
 			bindless,
 			render_pass,
 			create_info.input_assembly_state,
@@ -110,23 +110,21 @@ unsafe impl BindlessPipelinePlatform for Ash {
 				fragment.to_shader_stage_create_info(),
 			])
 			.collect::<SmallVec<[_; 3]>>();
-		Ok(AshMeshGraphicsPipeline(
-			Self::ash_create_abstract_graphics_pipeline::<T>(
-				bindless,
-				render_pass,
-				PipelineInputAssemblyStateCreateInfo::default(),
-				create_info.rasterization_state,
-				create_info.depth_stencil_state,
-				create_info.color_blend_state,
-				&stages,
-			)?,
-		))
+		Ok(AshMeshGraphicsPipeline(Self::ash_create_abstract_graphics_pipeline(
+			bindless,
+			render_pass,
+			PipelineInputAssemblyStateCreateInfo::default(),
+			create_info.rasterization_state,
+			create_info.depth_stencil_state,
+			create_info.color_blend_state,
+			&stages,
+		)?))
 	}
 }
 
 impl Ash {
 	#[inline]
-	unsafe fn ash_create_abstract_graphics_pipeline<T: BufferStruct>(
+	unsafe fn ash_create_abstract_graphics_pipeline(
 		bindless: &Bindless<Self>,
 		render_pass: &RenderPassFormat,
 		input_assembly_state: PipelineInputAssemblyStateCreateInfo,
@@ -170,7 +168,7 @@ impl Ash {
 					.push_next(
 						&mut PipelineRenderingCreateInfo::default()
 							.color_attachment_formats(&render_pass.color_attachments)
-							.depth_attachment_format(render_pass.depth_attachment.unwrap_or(Format::default())),
+							.depth_attachment_format(render_pass.depth_attachment.unwrap_or_default()),
 					)],
 				None,
 			)
@@ -217,7 +215,7 @@ impl<'a, S: ShaderType, T: BufferStruct> AshShaderModule<'a, S, T> {
 	}
 }
 
-impl<'a, S: ShaderType, T: BufferStruct> Drop for AshShaderModule<'a, S, T> {
+impl<S: ShaderType, T: BufferStruct> Drop for AshShaderModule<'_, S, T> {
 	fn drop(&mut self) {
 		unsafe { self.bindless.device.destroy_shader_module(self.module, None) }
 	}

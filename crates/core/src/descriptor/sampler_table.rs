@@ -38,7 +38,7 @@ impl<P: BindlessPlatform> SamplerTable<P> {
 
 pub struct SamplerTableAccess<'a, P: BindlessPlatform>(pub &'a Bindless<P>);
 
-impl<'a, P: BindlessPlatform> Deref for SamplerTableAccess<'a, P> {
+impl<P: BindlessPlatform> Deref for SamplerTableAccess<'_, P> {
 	type Target = SamplerTable<P>;
 
 	#[inline]
@@ -134,7 +134,7 @@ impl<P: BindlessPlatform> Debug for SamplerAllocationError<P> {
 	}
 }
 
-impl<'a, P: BindlessPlatform> SamplerTableAccess<'a, P> {
+impl<P: BindlessPlatform> SamplerTableAccess<'_, P> {
 	/// Allocates a new slot for this sampler
 	///
 	/// # Safety
@@ -176,7 +176,7 @@ impl<P: BindlessPlatform> TableInterface for SamplerInterface<P> {
 			if let Some(bindless) = self.bindless.upgrade() {
 				bindless
 					.platform
-					.destroy_samplers(&bindless.global_descriptor_set(), indices);
+					.destroy_samplers(bindless.global_descriptor_set(), indices);
 			}
 		}
 	}

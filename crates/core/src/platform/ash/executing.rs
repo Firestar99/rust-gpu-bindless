@@ -185,7 +185,7 @@ impl Drop for AshExecution {
 		let bindless = self.bindless();
 		bindless
 			.execution_manager
-			.push_to_free_pool(&bindless, self.resource.clone())
+			.push_to_free_pool(bindless, self.resource.clone())
 	}
 }
 
@@ -200,7 +200,7 @@ pub struct AshExecutionManager {
 	wait_thread_notify_timeline_value_receive: AtomicU64,
 }
 
-pub const ASH_WAIT_SEMAPHORE_THREAD_NAME: &'static str = "AshWaitSemaphoreThread";
+pub const ASH_WAIT_SEMAPHORE_THREAD_NAME: &str = "AshWaitSemaphoreThread";
 
 impl AshExecutionManager {
 	pub fn new(bindless: &WeakBindless<Ash>, create_info: &AshCreateInfo) -> VkResult<Self> {
@@ -295,13 +295,13 @@ impl AshExecutionManager {
 				// add new semaphores
 				// MUST happen after timeline_value_receive was set
 				while let Some(e) = execution_manager.submit_for_waiting.pop() {
-					if !e.check_completion(&device) {
+					if !e.check_completion(device) {
 						pending.push(e);
 					}
 				}
 
 				// check each semaphore for completion
-				pending.retain(|e| !e.check_completion(&device));
+				pending.retain(|e| !e.check_completion(device));
 				if !pending.is_empty() {
 					// wait for any semaphore to complete
 					assert!(semaphores.is_empty() && values.is_empty());

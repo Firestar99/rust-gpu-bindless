@@ -107,7 +107,7 @@ async fn test_triangle<P: BindlessPipelinePlatform>(bindless: &Bindless<P>) -> a
 	)?;
 
 	let rt_download = bindless.execute(|cmd| {
-		let mut rt_download = rt_download.access::<TransferWrite>(cmd)?;
+		let rt_download = rt_download.access::<TransferWrite>(cmd)?;
 		let mut image = rt_image.access::<ColorAttachment>(cmd)?;
 		cmd.begin_rendering(
 			render_pass_format,
@@ -134,8 +134,8 @@ async fn test_triangle<P: BindlessPipelinePlatform>(bindless: &Bindless<P>) -> a
 			},
 		)?;
 
-		let mut image = image.transition::<TransferRead>()?;
-		unsafe { cmd.copy_image_to_buffer(&mut image, &mut rt_download)? };
+		let image = image.transition::<TransferRead>()?;
+		unsafe { cmd.copy_image_to_buffer(&image, &rt_download)? };
 
 		Ok(rt_download.transition::<HostAccess>()?.into_desc())
 	})?;

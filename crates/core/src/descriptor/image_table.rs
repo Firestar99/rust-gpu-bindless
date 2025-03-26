@@ -123,7 +123,7 @@ impl<P: BindlessPlatform> ImageTable<P> {
 
 pub struct ImageTableAccess<'a, P: BindlessPlatform>(pub &'a Bindless<P>);
 
-impl<'a, P: BindlessPlatform> Deref for ImageTableAccess<'a, P> {
+impl<P: BindlessPlatform> Deref for ImageTableAccess<'_, P> {
 	type Target = ImageTable<P>;
 
 	#[inline]
@@ -199,7 +199,7 @@ pub struct BindlessImageCreateInfo<'a, T: ImageType> {
 	pub _phantom: PhantomData<T>,
 }
 
-impl<'a, T: ImageType> Default for BindlessImageCreateInfo<'a, T> {
+impl<T: ImageType> Default for BindlessImageCreateInfo<'_, T> {
 	fn default() -> Self {
 		Self {
 			format: Default::default(),
@@ -215,7 +215,7 @@ impl<'a, T: ImageType> Default for BindlessImageCreateInfo<'a, T> {
 	}
 }
 
-impl<'a, T: ImageType> BindlessImageCreateInfo<'a, T> {
+impl<T: ImageType> BindlessImageCreateInfo<'_, T> {
 	#[inline]
 	pub fn validate<P: BindlessPlatform>(&self) -> Result<(), ImageAllocationError<P>> {
 		if self.usage.contains(BindlessImageUsage::SWAPCHAIN) {
@@ -247,7 +247,7 @@ impl<P: BindlessPlatform> Debug for ImageAllocationError<P> {
 	}
 }
 
-impl<'a, P: BindlessPlatform> ImageTableAccess<'a, P> {
+impl<P: BindlessPlatform> ImageTableAccess<'_, P> {
 	/// Allocates a new slot for this image and imageview
 	///
 	/// # Safety
@@ -309,7 +309,7 @@ impl<P: BindlessPlatform> TableInterface for ImageInterface<P> {
 			if let Some(bindless) = self.bindless.upgrade() {
 				bindless
 					.platform
-					.destroy_images(&bindless.global_descriptor_set(), indices);
+					.destroy_images(bindless.global_descriptor_set(), indices);
 			}
 		}
 	}

@@ -270,11 +270,7 @@ impl AshSwapchain {
 				.map_err(AshAllocationError::from)?
 				.into_iter()
 				.enumerate()
-				.map(|(id, image)| {
-					Ok::<_, ImageAllocationError<Ash>>(Self::create_swapchain_image(
-						&bindless, params, extent, id as u32, image,
-					)?)
-				})
+				.map(|(id, image)| Self::create_swapchain_image(bindless, params, extent, id as u32, image))
 				.collect::<Result<Vec<_>, _>>()?;
 			Ok((swapchain, images))
 		}
@@ -459,7 +455,7 @@ impl AshSwapchain {
 					.swapchain_image_id
 					.get()
 					.expect("Swapchain usage without swapchain_image_id set");
-				if let Some(_) = self.images[id as usize] {
+				if self.images[id as usize].is_some() {
 					return Err(PresentError::SwapchainIdOccupied(id));
 				}
 				let access = slot.access_lock.try_lock()?;

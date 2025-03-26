@@ -30,7 +30,7 @@ fn test_semaphore_ash() -> anyhow::Result<()> {
 async fn test_semaphore<P: BindlessPipelinePlatform>(bindless: &Bindless<P>) -> anyhow::Result<()> {
 	let value = (0..1024).map(|i| i as f32).collect::<Vec<_>>();
 	let len = value.len();
-	let wgs = (len as u32 + COMPUTE_COPY_WG - 1) / COMPUTE_COPY_WG;
+	let wgs = (len as u32).div_ceil(COMPUTE_COPY_WG);
 
 	// The shader isn't very interesting, it just copies data from `input` to `output`.
 	// Rather have a look at this CPU code, which...

@@ -71,7 +71,7 @@ pub struct Rendering<'a: 'b, 'b, P: BindlessPipelinePlatform> {
 	extent: UVec2,
 }
 
-unsafe impl<'a, 'b, P: BindlessPipelinePlatform> TransientAccess<'a> for Rendering<'a, 'b, P> {}
+unsafe impl<'a, P: BindlessPipelinePlatform> TransientAccess<'a> for Rendering<'a, '_, P> {}
 
 impl<'a: 'b, 'b, P: BindlessPipelinePlatform> Deref for Rendering<'a, 'b, P> {
 	type Target = P::RenderingContext<'a, 'b>;
@@ -125,19 +125,15 @@ impl<'a, P: BindlessPipelinePlatform> Recording<'a, P> {
 				} else {
 					return Err(RenderingError::DepthAttachmentMissing.into());
 				}
-			} else {
-				if let Some(depth_attachment) = &depth_attachment {
-					return Err(RenderingError::DepthAttachmentNotExpected {
-						name: depth_attachment.image.inner_slot().debug_name.to_string(),
-					}
-					.into());
-				} else {
-					if let Some(color_attachment1) = color_attachments.first() {
-						color_attachment1.image.inner_slot().extent
-					} else {
-						return Err(RenderingError::NoAttachments.into());
-					}
+			} else if let Some(depth_attachment) = &depth_attachment {
+				return Err(RenderingError::DepthAttachmentNotExpected {
+					name: depth_attachment.image.inner_slot().debug_name.to_string(),
 				}
+				.into());
+			} else if let Some(color_attachment1) = color_attachments.first() {
+				color_attachment1.image.inner_slot().extent
+			} else {
+				return Err(RenderingError::NoAttachments.into());
 			};
 
 			if color_attachments.len() != format.color_attachments.len() {
@@ -187,10 +183,10 @@ impl<'a, P: BindlessPipelinePlatform> Recording<'a, P> {
 			rendering.set_scissor_to_extent();
 
 			f(&mut rendering)?;
-			Ok(rendering
+			rendering
 				.platform
 				.end_rendering()
-				.map_err(Into::<RecordingError<P>>::into)?)
+				.map_err(Into::<RecordingError<P>>::into)
 		}
 	}
 }
@@ -203,10 +199,9 @@ impl<'a: 'b, 'b, P: BindlessPipelinePlatform> Rendering<'a, 'b, P> {
 		param: T,
 	) -> Result<(), RecordingError<P>> {
 		unsafe {
-			Ok(self
-				.platform
+			self.platform
 				.draw(pipeline, count, param)
-				.map_err(Into::<RecordingError<P>>::into)?)
+				.map_err(Into::<RecordingError<P>>::into)
 		}
 	}
 
@@ -219,10 +214,9 @@ impl<'a: 'b, 'b, P: BindlessPipelinePlatform> Rendering<'a, 'b, P> {
 	) -> Result<(), RecordingError<P>> {
 		unsafe {
 			index_buffer.has_required_usage(BindlessBufferUsage::INDEX_BUFFER)?;
-			Ok(self
-				.platform
+			self.platform
 				.draw_indexed(pipeline, index_buffer, count, param)
-				.map_err(Into::<RecordingError<P>>::into)?)
+				.map_err(Into::<RecordingError<P>>::into)
 		}
 	}
 
@@ -234,10 +228,9 @@ impl<'a: 'b, 'b, P: BindlessPipelinePlatform> Rendering<'a, 'b, P> {
 	) -> Result<(), RecordingError<P>> {
 		unsafe {
 			indirect.has_required_usage(BindlessBufferUsage::INDIRECT_BUFFER)?;
-			Ok(self
-				.platform
+			self.platform
 				.draw_indirect(pipeline, indirect, param)
-				.map_err(Into::<RecordingError<P>>::into)?)
+				.map_err(Into::<RecordingError<P>>::into)
 		}
 	}
 
@@ -256,10 +249,9 @@ impl<'a: 'b, 'b, P: BindlessPipelinePlatform> Rendering<'a, 'b, P> {
 		unsafe {
 			index_buffer.has_required_usage(BindlessBufferUsage::INDEX_BUFFER)?;
 			indirect.has_required_usage(BindlessBufferUsage::INDIRECT_BUFFER)?;
-			Ok(self
-				.platform
+			self.platform
 				.draw_indexed_indirect(pipeline, index_buffer, indirect, param)
-				.map_err(Into::<RecordingError<P>>::into)?)
+				.map_err(Into::<RecordingError<P>>::into)
 		}
 	}
 
@@ -270,10 +262,9 @@ impl<'a: 'b, 'b, P: BindlessPipelinePlatform> Rendering<'a, 'b, P> {
 		param: T,
 	) -> Result<(), RecordingError<P>> {
 		unsafe {
-			Ok(self
-				.platform
+			self.platform
 				.draw_mesh_tasks(pipeline, group_counts, param)
-				.map_err(Into::<RecordingError<P>>::into)?)
+				.map_err(Into::<RecordingError<P>>::into)
 		}
 	}
 
@@ -285,10 +276,9 @@ impl<'a: 'b, 'b, P: BindlessPipelinePlatform> Rendering<'a, 'b, P> {
 	) -> Result<(), RecordingError<P>> {
 		unsafe {
 			indirect.has_required_usage(BindlessBufferUsage::INDIRECT_BUFFER)?;
-			Ok(self
-				.platform
+			self.platform
 				.draw_mesh_tasks_indirect(pipeline, indirect, param)
-				.map_err(Into::<RecordingError<P>>::into)?)
+				.map_err(Into::<RecordingError<P>>::into)
 		}
 	}
 

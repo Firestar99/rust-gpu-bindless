@@ -124,8 +124,10 @@ pub struct AshCreateInfo {
 	pub queue: Mutex<ash::vk::Queue>,
 	pub cache: Option<PipelineCache>,
 	pub extensions: AshExtensions,
-	pub destroy: Option<Box<dyn FnOnce(&mut AshCreateInfo) + Send + Sync>>,
+	pub destroy: Option<AshDestroyFn>,
 }
+
+pub type AshDestroyFn = Box<dyn FnOnce(&mut AshCreateInfo) + Send + Sync>;
 
 #[derive(Default)]
 #[non_exhaustive]
@@ -195,13 +197,14 @@ impl AshMemoryAllocation {
 	///
 	/// # Safety
 	/// You must ensure you have exclusive mutable access to the Allocation
+	#[allow(clippy::mut_from_ref)]
 	pub unsafe fn get_mut(&self) -> &mut Allocation {
-		unsafe { (&mut *self.0.get()).as_mut().unwrap() }
+		unsafe { (*self.0.get()).as_mut().unwrap() }
 	}
 
 	/// Take the `AshMemoryAllocation`
 	pub fn take(&self) -> Option<Allocation> {
-		unsafe { (&mut *self.0.get()).take() }
+		unsafe { (*self.0.get()).take() }
 	}
 }
 
@@ -594,7 +597,7 @@ unsafe impl BindlessPlatform for Ash {
 		})?;
 		self.device
 			.bind_image_memory(image, memory_allocation.memory(), memory_allocation.offset())?;
-		let image_view = self.create_image_view(image, &create_info)?;
+		let image_view = self.create_image_view(image, create_info)?;
 		Ok(AshImage {
 			image,
 			image_view,
@@ -625,7 +628,7 @@ unsafe impl BindlessPlatform for Ash {
 		}
 	}
 
-	unsafe fn mapped_buffer_to_slab<'a>(buffer: &'a BufferSlot<Self>) -> &'a mut (impl Slab + 'a) {
+	unsafe fn mapped_buffer_to_slab(buffer: &BufferSlot<Self>) -> &mut (impl Slab + '_) {
 		buffer.allocation.get_mut()
 	}
 

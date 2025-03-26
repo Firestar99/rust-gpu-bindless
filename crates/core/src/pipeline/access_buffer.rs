@@ -57,6 +57,9 @@ pub struct MutBufferAccess<'a, P: BindlessPipelinePlatform, T: BufferContent + ?
 
 impl<'a, P: BindlessPipelinePlatform, T: BufferContent + ?Sized, A: BufferAccessType> MutBufferAccess<'a, P, T, A> {
 	/// See [`MutBufferAccessExt::access_as_undefined`]
+	///
+	/// # Safety
+	/// Must not read uninitialized memory and must fully overwrite it within this execution context.
 	pub unsafe fn from_undefined(desc: MutDesc<P, MutBuffer<T>>, cmd: &Recording<'a, P>) -> Result<Self, AccessError> {
 		Self::from_inner(desc, cmd, |_| BufferAccess::Undefined)
 	}
@@ -140,14 +143,18 @@ impl<'a, P: BindlessPipelinePlatform, T: BufferContent + ?Sized, A: BufferAccess
 	}
 }
 
-impl<'a, P: BindlessPipelinePlatform, T: BufferStruct, A: BufferAccessType> MutBufferAccess<'a, P, [T], A> {
+impl<P: BindlessPipelinePlatform, T: BufferStruct, A: BufferAccessType> MutBufferAccess<'_, P, [T], A> {
 	pub fn len(&self) -> usize {
 		unsafe { self.inner_slot().len }
 	}
+
+	pub fn is_empty(&self) -> bool {
+		self.len() == 0
+	}
 }
 
-impl<'a, P: BindlessPipelinePlatform, T: BufferStructPlain, A: BufferAccessType, const N: usize>
-	MutBufferAccess<'a, P, [T; N], A>
+impl<P: BindlessPipelinePlatform, T: BufferStructPlain, A: BufferAccessType, const N: usize>
+	MutBufferAccess<'_, P, [T; N], A>
 where
 	// see `impl BufferStructPlain for [T; N]`
 	T: Default,
@@ -156,10 +163,14 @@ where
 	pub const fn len(&self) -> usize {
 		N
 	}
+
+	pub fn is_empty(&self) -> bool {
+		self.len() == 0
+	}
 }
 
-impl<'a, P: BindlessPipelinePlatform, T: BufferContent + ?Sized, A: BufferAccessType + ShaderReadable>
-	MutBufferAccess<'a, P, T, A>
+impl<P: BindlessPipelinePlatform, T: BufferContent + ?Sized, A: BufferAccessType + ShaderReadable>
+	MutBufferAccess<'_, P, T, A>
 {
 	pub fn to_transient(&self) -> Result<TransientDesc<Buffer<T>>, AccessError> {
 		self.has_required_usage(BindlessBufferUsage::STORAGE_BUFFER)?;
@@ -173,8 +184,8 @@ impl<'a, P: BindlessPipelinePlatform, T: BufferContent + ?Sized, A: BufferAccess
 	}
 }
 
-impl<'a, P: BindlessPipelinePlatform, T: BufferContent + ?Sized, A: BufferAccessType + ShaderReadWriteable>
-	MutBufferAccess<'a, P, T, A>
+impl<P: BindlessPipelinePlatform, T: BufferContent + ?Sized, A: BufferAccessType + ShaderReadWriteable>
+	MutBufferAccess<'_, P, T, A>
 {
 	pub fn to_mut_transient(&self) -> Result<TransientDesc<MutBuffer<T>>, AccessError> {
 		self.has_required_usage(BindlessBufferUsage::STORAGE_BUFFER)?;

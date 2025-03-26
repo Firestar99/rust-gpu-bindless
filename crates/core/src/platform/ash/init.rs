@@ -71,7 +71,7 @@ pub struct AppConfig<'a> {
 	pub version: u32,
 }
 
-impl<'a> Default for AppConfig<'a> {
+impl Default for AppConfig<'_> {
 	fn default() -> Self {
 		Self {
 			name: c"Unknown App",
