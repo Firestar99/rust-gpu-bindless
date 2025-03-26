@@ -7,6 +7,7 @@ use std::env;
 use std::path::{Path, PathBuf};
 
 pub mod codegen;
+pub mod symbols;
 
 pub use spirv_builder;
 

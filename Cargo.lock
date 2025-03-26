@@ -2128,6 +2128,7 @@ dependencies = [
  "rust-gpu-bindless-macro-utils",
  "spirv-builder",
  "syn",
+ "thiserror 2.0.12",
 ]
 
 [[package]]
