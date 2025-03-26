@@ -1,8 +1,8 @@
 #![cfg(test)]
 
 use crate::debugger;
+use glam::UVec2;
 use pollster::block_on;
-use rust_gpu_bindless::spirv_std::glam::UVec2;
 use rust_gpu_bindless_core::descriptor::{
 	Bindless, BindlessAllocationScheme, BindlessBufferCreateInfo, BindlessBufferUsage, BindlessImageCreateInfo,
 	BindlessImageUsage, DescriptorCounts, Extent, Format, Image2d, MutDescBufferExt,

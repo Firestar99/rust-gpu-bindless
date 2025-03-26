@@ -1071,6 +1071,7 @@ dependencies = [
  "anyhow",
  "approx",
  "ash",
+ "glam",
  "integration-test-shader",
  "pollster",
  "rust-gpu-bindless-core",

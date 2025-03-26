@@ -19,6 +19,9 @@ integration-test-shader = { workspace = true }
 winit = { workspace = true }
 ash = { workspace = true }
 
+# bytes and numbers
+glam = { workspace = true }
+
 # other
 smallvec = { workspace = true }
 pollster = { workspace = true }
