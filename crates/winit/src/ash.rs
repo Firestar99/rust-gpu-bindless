@@ -21,7 +21,6 @@ use rust_gpu_bindless_core::platform::ash::{
 use std::ffi::CStr;
 use std::fmt::Display;
 use std::fmt::{Debug, Formatter};
-use std::sync::Arc;
 use std::time::Duration;
 use thiserror::Error;
 use winit::event::{Event, WindowEvent};
@@ -96,7 +95,7 @@ impl AshSwapchainParams {
 	}
 
 	pub unsafe fn automatic_best(
-		bindless: &Arc<Bindless<Ash>>,
+		bindless: &Bindless<Ash>,
 		surface: &ash::vk::SurfaceKHR,
 		image_usage: BindlessImageUsage,
 		format_preference: SwapchainImageFormatPreference,
@@ -159,7 +158,7 @@ pub struct SwapchainSync {
 }
 
 impl SwapchainSync {
-	pub unsafe fn new(bindless: &Arc<Bindless<Ash>>) -> anyhow::Result<Self> {
+	pub unsafe fn new(bindless: &Bindless<Ash>) -> anyhow::Result<Self> {
 		unsafe {
 			Ok(Self {
 				acquire: bindless
@@ -173,7 +172,7 @@ impl SwapchainSync {
 		}
 	}
 
-	pub unsafe fn destroy(&mut self, bindless: &Arc<Bindless<Ash>>) {
+	pub unsafe fn destroy(&mut self, bindless: &Bindless<Ash>) {
 		bindless.device.destroy_semaphore(self.acquire, None);
 		bindless.device.destroy_semaphore(self.present, None);
 		bindless.device.destroy_fence(self.acquire_fence, None);
@@ -181,7 +180,7 @@ impl SwapchainSync {
 }
 
 pub struct AshSwapchain {
-	bindless: Arc<Bindless<Ash>>,
+	bindless: Bindless<Ash>,
 	event_loop: EventLoopExecutor,
 	window: WindowRef,
 	surface: ash::vk::SurfaceKHR,
@@ -195,7 +194,7 @@ pub struct AshSwapchain {
 
 impl AshSwapchain {
 	pub async unsafe fn new(
-		bindless: &Arc<Bindless<Ash>>,
+		bindless: &Bindless<Ash>,
 		event_loop: &EventLoopExecutor,
 		window_ref: WindowRef,
 		params: impl FnOnce(&ash::vk::SurfaceKHR, &ActiveEventLoop) -> anyhow::Result<AshSwapchainParams> + Send + 'static,
@@ -240,7 +239,7 @@ impl AshSwapchain {
 	}
 
 	unsafe fn create_swapchain(
-		bindless: &Arc<Bindless<Ash>>,
+		bindless: &Bindless<Ash>,
 		window: &WindowRef,
 		surface: ash::vk::SurfaceKHR,
 		params: &AshSwapchainParams,
@@ -282,7 +281,7 @@ impl AshSwapchain {
 	}
 
 	unsafe fn create_swapchain_image(
-		bindless: &Arc<Bindless<Ash>>,
+		bindless: &Bindless<Ash>,
 		params: &AshSwapchainParams,
 		extent: Extent,
 		id: u32,

@@ -18,7 +18,7 @@ pub struct MeshGraphicsPipelineCreateInfo<'a> {
 
 impl<P: BindlessPipelinePlatform> Bindless<P> {
 	pub fn create_mesh_graphics_pipeline<T: BufferStruct>(
-		self: &Arc<Self>,
+		&self,
 		render_pass: &RenderPassFormat,
 		create_info: &MeshGraphicsPipelineCreateInfo,
 		task_shader: Option<&impl BindlessShader<ShaderType = TaskShader, ParamConstant = T>>,

@@ -16,7 +16,6 @@ use rust_gpu_bindless_shaders::utils::viewport::Viewport;
 use smallvec::SmallVec;
 use std::mem::size_of;
 use std::ops::{Deref, DerefMut};
-use std::sync::Arc;
 
 pub struct AshRenderingContext<'a, 'b> {
 	recording: &'b mut AshRecordingContext<'a>,
@@ -187,7 +186,7 @@ unsafe impl<'a, 'b> TransientAccess<'a> for AshRenderingContext<'a, 'b> {}
 
 unsafe impl<'a, 'b> HasResourceContext<'a, Ash> for AshRenderingContext<'a, 'b> {
 	#[inline]
-	fn bindless(&self) -> &Arc<Bindless<Ash>> {
+	fn bindless(&self) -> &Bindless<Ash> {
 		self.recording.bindless()
 	}
 

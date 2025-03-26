@@ -8,7 +8,7 @@ use std::sync::Arc;
 
 impl<P: BindlessPipelinePlatform> Bindless<P> {
 	pub fn create_compute_pipeline<T: BufferStruct>(
-		self: &Arc<Self>,
+		&self,
 		compute_shader: &impl BindlessShader<ShaderType = ComputeShader, ParamConstant = T>,
 	) -> Result<BindlessComputePipeline<P, T>, P::PipelineCreationError> {
 		unsafe {

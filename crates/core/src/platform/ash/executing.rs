@@ -1,4 +1,4 @@
-use crate::descriptor::{Bindless, BindlessFrame};
+use crate::descriptor::{Bindless, BindlessFrame, WeakBindless};
 use crate::platform::ash::{Ash, AshCreateInfo, DeviceExt};
 use crate::platform::PendingExecution;
 use ash::prelude::VkResult;
@@ -84,7 +84,7 @@ impl AshExecutionResource {
 }
 
 pub struct AshExecution {
-	bindless: Arc<Bindless<Ash>>,
+	bindless: Bindless<Ash>,
 	resource: AshExecutionResource,
 	/// To ensure no racing may happen, `wakers` must be held while this is checked for consistent results.
 	completed: AtomicBool,
@@ -92,13 +92,13 @@ pub struct AshExecution {
 }
 
 pub struct MutexedAshExecution {
-	frame: Option<Arc<BindlessFrame<Ash>>>,
+	frame: Option<BindlessFrame<Ash>>,
 	wakers: SmallVec<[Waker; 1]>,
 }
 
 impl AshExecution {
 	#[inline]
-	pub fn bindless(&self) -> &Arc<Bindless<Ash>> {
+	pub fn bindless(&self) -> &Bindless<Ash> {
 		&self.bindless
 	}
 
@@ -107,7 +107,7 @@ impl AshExecution {
 		&self.resource
 	}
 
-	pub fn new(resource: AshExecutionResource, frame: Arc<BindlessFrame<Ash>>) -> Self {
+	pub fn new(resource: AshExecutionResource, frame: BindlessFrame<Ash>) -> Self {
 		Self {
 			bindless: frame.bindless.clone(),
 			resource,
@@ -119,7 +119,7 @@ impl AshExecution {
 		}
 	}
 
-	pub unsafe fn new_no_frame(resource: AshExecutionResource, bindless: Arc<Bindless<Ash>>) -> Self {
+	pub unsafe fn new_no_frame(resource: AshExecutionResource, bindless: Bindless<Ash>) -> Self {
 		Self {
 			bindless,
 			resource,
@@ -190,7 +190,7 @@ impl Drop for AshExecution {
 }
 
 pub struct AshExecutionManager {
-	bindless: Weak<Bindless<Ash>>,
+	bindless: WeakBindless<Ash>,
 	free_pool: SegQueue<AshExecutionResource>,
 	submit_for_waiting: SegQueue<Arc<AshExecution>>,
 	wait_thread: Mutex<(Option<thread::ThreadId>, Option<thread::JoinHandle<()>>)>,
@@ -203,7 +203,7 @@ pub struct AshExecutionManager {
 pub const ASH_WAIT_SEMAPHORE_THREAD_NAME: &'static str = "AshWaitSemaphoreThread";
 
 impl AshExecutionManager {
-	pub fn new(bindless: &Weak<Bindless<Ash>>, create_info: &AshCreateInfo) -> VkResult<Self> {
+	pub fn new(bindless: &WeakBindless<Ash>, create_info: &AshCreateInfo) -> VkResult<Self> {
 		let initial_value = 0;
 		Ok(Self {
 			bindless: bindless.clone(),
@@ -217,7 +217,7 @@ impl AshExecutionManager {
 		})
 	}
 
-	pub fn bindless(&self) -> Arc<Bindless<Ash>> {
+	pub fn bindless(&self) -> Bindless<Ash> {
 		self.bindless.upgrade().expect("bindless was freed")
 	}
 
@@ -237,14 +237,14 @@ impl AshExecutionManager {
 		)))
 	}
 
-	fn pop_free_pool(&self, bindless: &Arc<Bindless<Ash>>) -> VkResult<AshExecutionResource> {
+	fn pop_free_pool(&self, bindless: &Bindless<Ash>) -> VkResult<AshExecutionResource> {
 		Ok(match self.free_pool.pop() {
 			None => AshExecutionResource::new(&bindless.device)?,
 			Some(e) => e,
 		})
 	}
 
-	fn push_to_free_pool(&self, bindless: &Arc<Bindless<Ash>>, mut resource: AshExecutionResource) {
+	fn push_to_free_pool(&self, bindless: &Bindless<Ash>, mut resource: AshExecutionResource) {
 		resource.reset(&bindless.device);
 		self.free_pool.push(resource);
 	}
@@ -274,7 +274,7 @@ impl AshExecutionManager {
 		Ok(())
 	}
 
-	unsafe fn wait_semaphore_thread_main(bindless: Arc<Bindless<Ash>>) {
+	unsafe fn wait_semaphore_thread_main(bindless: Bindless<Ash>) {
 		unsafe {
 			let execution_manager = &bindless.execution_manager;
 			let device = &bindless.device;
@@ -359,7 +359,7 @@ impl AshExecutionManager {
 		}
 	}
 
-	pub fn start_wait_semaphore_thread(&self, bindless: &Arc<Bindless<Ash>>) {
+	pub fn start_wait_semaphore_thread(&self, bindless: &Bindless<Ash>) {
 		let mut guard = self.wait_thread.lock();
 		if guard.0.is_none() {
 			self.assert_not_in_shutdown();

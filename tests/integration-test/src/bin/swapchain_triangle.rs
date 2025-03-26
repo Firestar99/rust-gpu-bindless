@@ -116,7 +116,7 @@ impl TriangleRendererRTFormat {
 }
 
 pub struct TriangleRenderer<P: BindlessPipelinePlatform> {
-	bindless: Arc<Bindless<P>>,
+	bindless: Bindless<P>,
 	rt_format: TriangleRendererRTFormat,
 	pipeline: BindlessGraphicsPipeline<P, Param<'static>>,
 	timer: Instant,
@@ -125,7 +125,7 @@ pub struct TriangleRenderer<P: BindlessPipelinePlatform> {
 const VERTEX_CNT: usize = 3;
 
 impl<P: BindlessPipelinePlatform> TriangleRenderer<P> {
-	pub fn new(bindless: &Arc<Bindless<P>>, rt_format: Format) -> anyhow::Result<Self> {
+	pub fn new(bindless: &Bindless<P>, rt_format: Format) -> anyhow::Result<Self> {
 		let rt_format = TriangleRendererRTFormat { rt_format };
 
 		let pipeline = bindless.create_graphics_pipeline(

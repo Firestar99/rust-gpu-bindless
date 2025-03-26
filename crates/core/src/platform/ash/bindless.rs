@@ -3,7 +3,7 @@ use crate::backing::table::DrainFlushQueue;
 use crate::descriptor::{
 	Bindless, BindlessBufferCreateInfo, BindlessBufferUsage, BindlessImageCreateInfo, BindlessImageUsage,
 	BindlessSamplerCreateInfo, BufferAllocationError, BufferInterface, BufferSlot, DescriptorCounts,
-	ImageAllocationError, ImageInterface, SamplerAllocationError, SamplerInterface,
+	ImageAllocationError, ImageInterface, SamplerAllocationError, SamplerInterface, WeakBindless,
 };
 use crate::platform::ash::image_format::FormatExt;
 use crate::platform::ash::{
@@ -37,7 +37,6 @@ use std::cell::UnsafeCell;
 use std::ffi::CString;
 use std::mem::size_of;
 use std::ops::Deref;
-use std::sync::{Arc, Weak};
 use thiserror::Error;
 
 pub struct Ash {
@@ -47,7 +46,7 @@ pub struct Ash {
 assert_impl_all!(Bindless<Ash>: Send, Sync);
 
 impl Ash {
-	pub fn new(create_info: AshCreateInfo, bindless: &Weak<Bindless<Self>>) -> VkResult<Self> {
+	pub fn new(create_info: AshCreateInfo, bindless: &WeakBindless<Self>) -> VkResult<Self> {
 		Ok(Ash {
 			execution_manager: AshExecutionManager::new(bindless, &create_info)?,
 			create_info,
@@ -281,7 +280,7 @@ unsafe impl BindlessPlatform for Ash {
 
 	unsafe fn create_platform(
 		create_info: Self::PlatformCreateInfo,
-		bindless_cyclic: &Weak<Bindless<Self>>,
+		bindless_cyclic: &WeakBindless<Self>,
 	) -> VkResult<Self> {
 		Ash::new(create_info, bindless_cyclic)
 	}
@@ -389,11 +388,11 @@ unsafe impl BindlessPlatform for Ash {
 		}
 	}
 
-	unsafe fn bindless_initialized(&self, bindless: &Arc<Bindless<Self>>) {
+	unsafe fn bindless_initialized(&self, bindless: &Bindless<Self>) {
 		self.execution_manager.start_wait_semaphore_thread(bindless);
 	}
 
-	unsafe fn bindless_shutdown(&self, _bindless: &Arc<Bindless<Self>>) {
+	unsafe fn bindless_shutdown(&self, _bindless: &Bindless<Self>) {
 		self.execution_manager.graceful_shutdown().unwrap();
 	}
 

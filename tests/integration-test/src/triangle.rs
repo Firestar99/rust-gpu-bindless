@@ -21,7 +21,6 @@ use rust_gpu_bindless_core::pipeline::{
 use rust_gpu_bindless_core::platform::ash::{ash_init_single_graphics_queue, Ash, AshSingleGraphicsQueueCreateInfo};
 use rust_gpu_bindless_core::platform::BindlessPipelinePlatform;
 use smallvec::SmallVec;
-use std::sync::Arc;
 
 const R: ColorEnum = ColorEnum::Red;
 const C: ColorEnum = ColorEnum::Cyan;
@@ -43,7 +42,7 @@ fn test_triangle_ash() -> anyhow::Result<()> {
 	}
 }
 
-async fn test_triangle<P: BindlessPipelinePlatform>(bindless: &Arc<Bindless<P>>) -> anyhow::Result<()> {
+async fn test_triangle<P: BindlessPipelinePlatform>(bindless: &Bindless<P>) -> anyhow::Result<()> {
 	let vertices = bindless.buffer().alloc_shared_from_iter(
 		&BindlessBufferCreateInfo {
 			name: "vertices",

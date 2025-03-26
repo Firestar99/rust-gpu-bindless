@@ -4,7 +4,7 @@ use crate::descriptor::buffer_metadata_cpu::StrongMetadataCpu;
 use crate::descriptor::descriptor_content::{DescContentCpu, DescTable};
 use crate::descriptor::mutdesc::{MutBoxDescExt, MutDesc, MutDescExt};
 use crate::descriptor::{
-	AnyRCDesc, Bindless, BindlessAllocationScheme, DescContentMutCpu, DescriptorCounts, RCDesc, RCDescExt,
+	AnyRCDesc, Bindless, BindlessAllocationScheme, DescContentMutCpu, DescriptorCounts, RCDesc, RCDescExt, WeakBindless,
 };
 use crate::pipeline::{AccessLock, AccessLockError, BufferAccess};
 use crate::platform::{BindlessPlatform, PendingExecution};
@@ -20,7 +20,7 @@ use std::future::Future;
 use std::marker::PhantomData;
 use std::mem::size_of;
 use std::ops::Deref;
-use std::sync::{Arc, Weak};
+use std::sync::Arc;
 use thiserror::Error;
 
 impl<T: BufferContent + ?Sized> DescContentCpu for Buffer<T> {
@@ -77,7 +77,7 @@ pub struct BufferTable<P: BindlessPlatform> {
 }
 
 impl<P: BindlessPlatform> BufferTable<P> {
-	pub fn new(table_sync: &Arc<TableSync>, counts: DescriptorCounts, bindless: Weak<Bindless<P>>) -> Self {
+	pub fn new(table_sync: &Arc<TableSync>, counts: DescriptorCounts, bindless: WeakBindless<P>) -> Self {
 		Self {
 			table: table_sync
 				.register(counts.buffers, BufferInterface { bindless })
@@ -87,7 +87,7 @@ impl<P: BindlessPlatform> BufferTable<P> {
 }
 
 pub struct BufferInterface<P: BindlessPlatform> {
-	bindless: Weak<Bindless<P>>,
+	bindless: WeakBindless<P>,
 }
 
 impl<P: BindlessPlatform> TableInterface for BufferInterface<P> {
@@ -108,7 +108,7 @@ impl<P: BindlessPlatform> TableInterface for BufferInterface<P> {
 	}
 }
 
-pub struct BufferTableAccess<'a, P: BindlessPlatform>(pub &'a Arc<Bindless<P>>);
+pub struct BufferTableAccess<'a, P: BindlessPlatform>(pub &'a Bindless<P>);
 
 impl<'a, P: BindlessPlatform> Deref for BufferTableAccess<'a, P> {
 	type Target = BufferTable<P>;

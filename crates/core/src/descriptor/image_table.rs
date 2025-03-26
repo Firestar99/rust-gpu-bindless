@@ -2,7 +2,7 @@ use crate::backing::range_set::DescriptorIndexIterator;
 use crate::backing::table::{DrainFlushQueue, RcTableSlot, SlotAllocationError, Table, TableInterface, TableSync};
 use crate::descriptor::{
 	Bindless, BindlessAllocationScheme, DescContentCpu, DescTable, DescriptorCounts, Extent, MutDesc, MutDescExt,
-	RCDesc, RCDescExt,
+	RCDesc, RCDescExt, WeakBindless,
 };
 use crate::pipeline::{AccessLock, ImageAccess};
 use crate::platform::{BindlessPlatform, PendingExecution};
@@ -10,7 +10,7 @@ use rust_gpu_bindless_shaders::descriptor::{Image, ImageType, MutImage};
 use std::fmt::{Debug, Display, Formatter};
 use std::marker::PhantomData;
 use std::ops::Deref;
-use std::sync::{Arc, Weak};
+use std::sync::Arc;
 use thiserror::Error;
 
 impl<T: ImageType> DescContentCpu for Image<T> {
@@ -114,14 +114,14 @@ pub struct ImageTable<P: BindlessPlatform> {
 }
 
 impl<P: BindlessPlatform> ImageTable<P> {
-	pub fn new(table_sync: &Arc<TableSync>, counts: DescriptorCounts, bindless: Weak<Bindless<P>>) -> Self {
+	pub fn new(table_sync: &Arc<TableSync>, counts: DescriptorCounts, bindless: WeakBindless<P>) -> Self {
 		Self {
 			table: table_sync.register(counts.image, ImageInterface { bindless }).unwrap(),
 		}
 	}
 }
 
-pub struct ImageTableAccess<'a, P: BindlessPlatform>(pub &'a Arc<Bindless<P>>);
+pub struct ImageTableAccess<'a, P: BindlessPlatform>(pub &'a Bindless<P>);
 
 impl<'a, P: BindlessPlatform> Deref for ImageTableAccess<'a, P> {
 	type Target = ImageTable<P>;
@@ -298,7 +298,7 @@ impl<'a, P: BindlessPlatform> ImageTableAccess<'a, P> {
 }
 
 pub struct ImageInterface<P: BindlessPlatform> {
-	bindless: Weak<Bindless<P>>,
+	bindless: WeakBindless<P>,
 }
 
 impl<P: BindlessPlatform> TableInterface for ImageInterface<P> {

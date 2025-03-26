@@ -51,13 +51,13 @@ impl<P: EguiBindlessPlatform> Deref for EguiRenderer<P> {
 }
 
 pub struct EguiRendererInner<P: EguiBindlessPlatform> {
-	bindless: Arc<Bindless<P>>,
+	bindless: Bindless<P>,
 	/// deduplicate samplers, they will never be freed if unused
 	samplers: Mutex<FxHashMap<TextureOptions, RCDesc<P, Sampler>>>,
 }
 
 impl<P: EguiBindlessPlatform> EguiRenderer<P> {
-	pub fn new(bindless: Arc<Bindless<P>>) -> Self {
+	pub fn new(bindless: Bindless<P>) -> Self {
 		EguiRenderer(Arc::new(EguiRendererInner {
 			bindless,
 			samplers: Mutex::new(FxHashMap::default()),

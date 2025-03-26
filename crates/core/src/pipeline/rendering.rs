@@ -18,7 +18,6 @@ use rust_gpu_bindless_shaders::utils::viewport::Viewport;
 use smallvec::SmallVec;
 use std::fmt::{Debug, Display, Formatter};
 use std::ops::{Deref, DerefMut};
-use std::sync::Arc;
 use thiserror::Error;
 
 pub type DrawIndexedIndirectCommand = spirv_std::indirect_command::DrawIndexedIndirectCommand;
@@ -92,7 +91,7 @@ impl<'a: 'b, 'b, P: BindlessPipelinePlatform> DerefMut for Rendering<'a, 'b, P> 
 
 unsafe impl<'a: 'b, 'b, P: BindlessPipelinePlatform> HasResourceContext<'a, P> for Rendering<'a, 'b, P> {
 	#[inline]
-	fn bindless(&self) -> &Arc<Bindless<Ash>> {
+	fn bindless(&self) -> &Bindless<Ash> {
 		self.platform.bindless()
 	}
 

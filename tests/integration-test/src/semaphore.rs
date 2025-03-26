@@ -11,7 +11,6 @@ use rust_gpu_bindless_core::descriptor::{
 use rust_gpu_bindless_core::pipeline::{HostAccess, MutBufferAccessExt, ShaderRead, ShaderReadWrite};
 use rust_gpu_bindless_core::platform::ash::{ash_init_single_graphics_queue, Ash, AshSingleGraphicsQueueCreateInfo};
 use rust_gpu_bindless_core::platform::BindlessPipelinePlatform;
-use std::sync::Arc;
 
 #[test]
 fn test_semaphore_ash() -> anyhow::Result<()> {
@@ -28,7 +27,7 @@ fn test_semaphore_ash() -> anyhow::Result<()> {
 	}
 }
 
-async fn test_semaphore<P: BindlessPipelinePlatform>(bindless: &Arc<Bindless<P>>) -> anyhow::Result<()> {
+async fn test_semaphore<P: BindlessPipelinePlatform>(bindless: &Bindless<P>) -> anyhow::Result<()> {
 	let value = (0..1024).map(|i| i as f32).collect::<Vec<_>>();
 	let len = value.len();
 	let wgs = (len as u32 + COMPUTE_COPY_WG - 1) / COMPUTE_COPY_WG;

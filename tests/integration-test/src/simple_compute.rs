@@ -11,7 +11,6 @@ use rust_gpu_bindless_core::descriptor::{
 use rust_gpu_bindless_core::pipeline::{HostAccess, MutBufferAccessExt, ShaderReadWrite};
 use rust_gpu_bindless_core::platform::ash::{ash_init_single_graphics_queue, Ash, AshSingleGraphicsQueueCreateInfo};
 use rust_gpu_bindless_core::platform::BindlessPipelinePlatform;
-use std::sync::Arc;
 
 #[test]
 fn test_simple_compute_ash() -> anyhow::Result<()> {
@@ -28,7 +27,7 @@ fn test_simple_compute_ash() -> anyhow::Result<()> {
 	}
 }
 
-async fn test_simple_compute<P: BindlessPipelinePlatform>(bindless: &Arc<Bindless<P>>) -> anyhow::Result<()> {
+async fn test_simple_compute<P: BindlessPipelinePlatform>(bindless: &Bindless<P>) -> anyhow::Result<()> {
 	let a = 42.2;
 	let b = [1., 2., 3.];
 	let c = 69.3;

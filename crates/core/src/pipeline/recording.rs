@@ -14,12 +14,11 @@ use rust_gpu_bindless_shaders::buffer_content::{BufferContent, BufferStruct};
 use rust_gpu_bindless_shaders::descriptor::{ImageType, TransientAccess};
 use std::fmt::{Debug, Display, Formatter};
 use std::ops::{Deref, DerefMut};
-use std::sync::Arc;
 use thiserror::Error;
 
 impl<P: BindlessPipelinePlatform> Bindless<P> {
 	pub fn execute<R: Send + Sync>(
-		self: &Arc<Self>,
+		&self,
 		f: impl FnOnce(&mut Recording<'_, P>) -> Result<R, RecordingError<P>>,
 	) -> Result<R, RecordingError<P>> {
 		unsafe { P::record_and_execute(self, f) }
@@ -48,14 +47,14 @@ impl<'a, P: BindlessPipelinePlatform> DerefMut for Recording<'a, P> {
 
 pub unsafe trait HasResourceContext<'a, P: BindlessPipelinePlatform>: TransientAccess<'a> + Sized {
 	/// Gets the [`Bindless`] of this execution
-	fn bindless(&self) -> &Arc<Bindless<Ash>>;
+	fn bindless(&self) -> &Bindless<Ash>;
 
 	fn resource_context(&self) -> &'a P::RecordingResourceContext;
 }
 
 unsafe impl<'a, P: BindlessPipelinePlatform> HasResourceContext<'a, P> for Recording<'a, P> {
 	#[inline]
-	fn bindless(&self) -> &Arc<Bindless<Ash>> {
+	fn bindless(&self) -> &Bindless<Ash> {
 		self.platform.bindless()
 	}
 

@@ -12,7 +12,6 @@ use rust_gpu_bindless_core::pipeline::{
 };
 use rust_gpu_bindless_core::platform::ash::{ash_init_single_graphics_queue, Ash, AshSingleGraphicsQueueCreateInfo};
 use rust_gpu_bindless_core::platform::BindlessPipelinePlatform;
-use std::sync::Arc;
 
 #[test]
 fn test_image_copy_ash() -> anyhow::Result<()> {
@@ -29,7 +28,7 @@ fn test_image_copy_ash() -> anyhow::Result<()> {
 	}
 }
 
-async fn test_image_copy<P: BindlessPipelinePlatform>(bindless: &Arc<Bindless<P>>) -> anyhow::Result<()> {
+async fn test_image_copy<P: BindlessPipelinePlatform>(bindless: &Bindless<P>) -> anyhow::Result<()> {
 	let extent = UVec2::new(32, 32);
 	let format = Format::R8G8B8A8_UNORM;
 	let len = (extent.x * extent.y * 4) as usize;
