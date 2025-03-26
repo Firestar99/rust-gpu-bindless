@@ -1,9 +1,7 @@
-use rust_gpu_bindless::generic::descriptor::{Bindless, BindlessImageUsage, DescriptorCounts};
-use rust_gpu_bindless::generic::pipeline::{ClearValue, ColorAttachment, LoadOp, MutImageAccessExt, Present};
-use rust_gpu_bindless::generic::platform::ash::Debuggers;
-use rust_gpu_bindless::generic::platform::ash::{
-	ash_init_single_graphics_queue, Ash, AshSingleGraphicsQueueCreateInfo,
-};
+use rust_gpu_bindless_core::descriptor::{Bindless, BindlessImageUsage, DescriptorCounts};
+use rust_gpu_bindless_core::pipeline::{ClearValue, ColorAttachment, LoadOp, MutImageAccessExt, Present};
+use rust_gpu_bindless_core::platform::ash::Debuggers;
+use rust_gpu_bindless_core::platform::ash::{ash_init_single_graphics_queue, Ash, AshSingleGraphicsQueueCreateInfo};
 use rust_gpu_bindless_egui::renderer::{EguiRenderPipeline, EguiRenderer, EguiRenderingOptions};
 use rust_gpu_bindless_egui::winit_integration::EguiWinitContext;
 use rust_gpu_bindless_winit::ash::{
