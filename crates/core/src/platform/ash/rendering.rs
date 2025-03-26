@@ -1,13 +1,12 @@
 use crate::descriptor::Bindless;
 use crate::pipeline::{
 	BindlessGraphicsPipeline, BindlessMeshGraphicsPipeline, ColorAttachment, DepthStencilAttachment,
-	HasResourceContext, IndexReadable, IndexTypeTrait, IndirectCommandReadable, MutOrSharedBuffer, RecordingError,
-	RenderPassFormat, RenderingAttachment,
+	DrawIndexedIndirectCommand, DrawIndirectCommand, HasResourceContext, IndexReadable, IndexTypeTrait,
+	IndirectCommandReadable, MutOrSharedBuffer, RecordingError, RenderPassFormat, RenderingAttachment,
 };
 use crate::platform::ash::bindless_pipeline::AshPipeline;
 use crate::platform::ash::{Ash, AshRecordingContext, AshRecordingError, AshRecordingResourceContext};
 use crate::platform::RenderingContext;
-use crate::spirv_std::indirect_command::{DrawIndexedIndirectCommand, DrawIndirectCommand};
 use ash::vk::{Extent2D, ImageLayout, Offset2D, PipelineBindPoint, Rect2D, RenderingAttachmentInfo, RenderingInfo};
 use glam::UVec2;
 use rust_gpu_bindless_shaders::buffer_content::BufferStruct;
@@ -326,7 +325,7 @@ unsafe impl<'a, 'b> RenderingContext<'a, 'b, Ash> for AshRenderingContext<'a, 'b
 		&mut self,
 		pipeline: &BindlessGraphicsPipeline<Ash, T>,
 		index_buffer: impl MutOrSharedBuffer<Ash, [IT], AIR>,
-		indirect: impl MutOrSharedBuffer<Ash, DrawIndirectCommand, AIC>,
+		indirect: impl MutOrSharedBuffer<Ash, DrawIndexedIndirectCommand, AIC>,
 		param: T,
 	) -> Result<(), AshRecordingError> {
 		unsafe {

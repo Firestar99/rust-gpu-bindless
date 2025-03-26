@@ -10,7 +10,6 @@ use crate::pipeline::recording::{HasResourceContext, Recording, RecordingError};
 use crate::pipeline::rendering::RenderingError::MismatchedColorAttachmentCount;
 use crate::platform::ash::Ash;
 use crate::platform::{BindlessPipelinePlatform, RenderingContext};
-use crate::spirv_std::indirect_command::{DrawIndexedIndirectCommand, DrawIndirectCommand};
 use glam::{IVec2, UVec2};
 use rust_gpu_bindless_shaders::buffer_content::BufferStruct;
 use rust_gpu_bindless_shaders::descriptor::{Image2d, TransientAccess};
@@ -21,6 +20,9 @@ use std::fmt::{Debug, Display, Formatter};
 use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 use thiserror::Error;
+
+pub type DrawIndexedIndirectCommand = crate::spirv_std::indirect_command::DrawIndexedIndirectCommand;
+pub type DrawIndirectCommand = crate::spirv_std::indirect_command::DrawIndirectCommand;
 
 /// A RenderPass defines the formats of the color and depth attachments.
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -249,7 +251,7 @@ impl<'a: 'b, 'b, P: BindlessPipelinePlatform> Rendering<'a, 'b, P> {
 		&mut self,
 		pipeline: &BindlessGraphicsPipeline<P, T>,
 		index_buffer: impl MutOrSharedBuffer<P, [IT], AIR>,
-		indirect: impl MutOrSharedBuffer<P, DrawIndirectCommand, AIC>,
+		indirect: impl MutOrSharedBuffer<P, DrawIndexedIndirectCommand, AIC>,
 		param: T,
 	) -> Result<(), RecordingError<P>> {
 		unsafe {

@@ -1,13 +1,12 @@
 use crate::descriptor::{Bindless, BufferSlot, ImageSlot};
 use crate::pipeline::{
 	BindlessComputePipeline, BindlessGraphicsPipeline, BindlessMeshGraphicsPipeline, BufferAccess, BufferAccessType,
-	ColorAttachment, DepthStencilAttachment, GraphicsPipelineCreateInfo, HasResourceContext, ImageAccess,
-	ImageAccessType, IndexReadable, IndexTypeTrait, IndirectCommandReadable, MeshGraphicsPipelineCreateInfo,
-	MutBufferAccess, MutImageAccess, MutOrSharedBuffer, Recording, RecordingError, RenderPassFormat,
-	RenderingAttachment, TransferReadable, TransferWriteable,
+	ColorAttachment, DepthStencilAttachment, DrawIndexedIndirectCommand, DrawIndirectCommand,
+	GraphicsPipelineCreateInfo, HasResourceContext, ImageAccess, ImageAccessType, IndexReadable, IndexTypeTrait,
+	IndirectCommandReadable, MeshGraphicsPipelineCreateInfo, MutBufferAccess, MutImageAccess, MutOrSharedBuffer,
+	Recording, RecordingError, RenderPassFormat, RenderingAttachment, TransferReadable, TransferWriteable,
 };
 use crate::platform::BindlessPlatform;
-use crate::spirv_std::indirect_command::{DrawIndexedIndirectCommand, DrawIndirectCommand};
 use glam::UVec2;
 use rust_gpu_bindless_shaders::buffer_content::{BufferContent, BufferStruct};
 use rust_gpu_bindless_shaders::descriptor::{ImageType, TransientAccess};
@@ -186,7 +185,7 @@ pub unsafe trait RenderingContext<'a, 'b, P: BindlessPipelinePlatform>: HasResou
 		&mut self,
 		pipeline: &BindlessGraphicsPipeline<P, T>,
 		index_buffer: impl MutOrSharedBuffer<P, [IT], AIR>,
-		indirect: impl MutOrSharedBuffer<P, DrawIndirectCommand, AIC>,
+		indirect: impl MutOrSharedBuffer<P, DrawIndexedIndirectCommand, AIC>,
 		param: T,
 	) -> Result<(), P::RecordingError>;
 
