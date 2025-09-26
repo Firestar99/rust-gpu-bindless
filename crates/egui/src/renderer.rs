@@ -7,7 +7,7 @@ use ash::vk::{
 };
 use egui::epaint::Primitive;
 use egui::{
-	epaint, Context, FullOutput, ImageData, PlatformOutput, RawInput, Rect, TextureId, TextureOptions, TexturesDelta,
+	Context, FullOutput, ImageData, PlatformOutput, RawInput, Rect, TextureId, TextureOptions, TexturesDelta, epaint,
 };
 use glam::{IVec2, UVec2};
 use parking_lot::Mutex;
@@ -211,7 +211,7 @@ impl<P: EguiBindlessPlatform> EguiRenderContext<P> {
 		&mut self,
 		new_input: RawInput,
 		run_ui: impl FnMut(&Context),
-	) -> Result<(EguiRenderOutput<P>, PlatformOutput), EguiRenderingError<P>> {
+	) -> Result<(EguiRenderOutput<'_, P>, PlatformOutput), EguiRenderingError<P>> {
 		profiling::function_scope!();
 		let full_output = {
 			profiling::scope!("egui::Context::run");
@@ -226,7 +226,7 @@ impl<P: EguiBindlessPlatform> EguiRenderContext<P> {
 	pub fn update(
 		&mut self,
 		output: FullOutput,
-	) -> Result<(EguiRenderOutput<P>, PlatformOutput), EguiRenderingError<P>> {
+	) -> Result<(EguiRenderOutput<'_, P>, PlatformOutput), EguiRenderingError<P>> {
 		profiling::function_scope!();
 		self.free_textures(&output.textures_delta)?;
 		self.update_textures(&output.textures_delta)?;
@@ -348,7 +348,7 @@ impl<P: EguiBindlessPlatform> EguiRenderContext<P> {
 		&mut self,
 		shapes: Vec<epaint::ClippedShape>,
 		pixels_per_point: f32,
-	) -> Result<EguiRenderOutput<P>, EguiRenderingError<P>> {
+	) -> Result<EguiRenderOutput<'_, P>, EguiRenderingError<P>> {
 		profiling::function_scope!();
 		if shapes.is_empty() {
 			return Ok(EguiRenderOutput::empty(self));
@@ -645,7 +645,8 @@ pub enum EguiRenderingError<P: EguiBindlessPlatform> {
 	},
 	#[error("Color RT with extent {color:?} must match depth RT with extent {depth:?}")]
 	MismatchExtent { color: Extent, depth: Extent },
-	#[error("TextureId {0:?} does not exist in the rendering backend. Has this `EguiRenderContext` been used with multiple egui `Context`s?"
+	#[error(
+		"TextureId {0:?} does not exist in the rendering backend. Has this `EguiRenderContext` been used with multiple egui `Context`s?"
 	)]
 	MissingTexture(TextureId),
 	#[error("Recording Error: {0}")]

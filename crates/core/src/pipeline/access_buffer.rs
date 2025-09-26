@@ -44,7 +44,7 @@ impl<P: BindlessPipelinePlatform, T: BufferContent + ?Sized> MutBufferAccessExt<
 		self,
 		cmd: &Recording<'a, P>,
 	) -> Result<MutBufferAccess<'a, P, T, A>, AccessError> {
-		MutBufferAccess::from_undefined(self, cmd)
+		unsafe { MutBufferAccess::from_undefined(self, cmd) }
 	}
 }
 
@@ -127,7 +127,7 @@ impl<'a, P: BindlessPipelinePlatform, T: BufferContent + ?Sized, A: BufferAccess
 	}
 
 	/// Turns this mutable access to a [`MutBuffer`] into a shared [`RCDesc`]
-	pub fn into_shared(self) -> impl Future<Output = RCDesc<P, Buffer<T>>> {
+	pub fn into_shared(self) -> impl Future<Output = RCDesc<P, Buffer<T>>> + use<P, T, A> {
 		unsafe {
 			// cannot fail
 			self.transition_inner(A::BUFFER_ACCESS, BufferAccess::GeneralRead)
@@ -172,7 +172,7 @@ where
 impl<P: BindlessPipelinePlatform, T: BufferContent + ?Sized, A: BufferAccessType + ShaderReadable>
 	MutBufferAccess<'_, P, T, A>
 {
-	pub fn to_transient(&self) -> Result<TransientDesc<Buffer<T>>, AccessError> {
+	pub fn to_transient(&self) -> Result<TransientDesc<'_, Buffer<T>>, AccessError> {
 		self.has_required_usage(BindlessBufferUsage::STORAGE_BUFFER)?;
 		// Safety: mutable resource is in a layout that implements ShaderReadable, so it is readable by a shader
 		unsafe {
@@ -187,7 +187,7 @@ impl<P: BindlessPipelinePlatform, T: BufferContent + ?Sized, A: BufferAccessType
 impl<P: BindlessPipelinePlatform, T: BufferContent + ?Sized, A: BufferAccessType + ShaderReadWriteable>
 	MutBufferAccess<'_, P, T, A>
 {
-	pub fn to_mut_transient(&self) -> Result<TransientDesc<MutBuffer<T>>, AccessError> {
+	pub fn to_mut_transient(&self) -> Result<TransientDesc<'_, MutBuffer<T>>, AccessError> {
 		self.has_required_usage(BindlessBufferUsage::STORAGE_BUFFER)?;
 		// Safety: mutable resource is in a layout that implements ShaderReadWriteable, so it is readable and writeable
 		// by a shader
